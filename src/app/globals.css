@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/*
+ * Mobile-first palette. Surfaces stay neutral so the medication colors are the
+ * only saturated thing on screen — that is what makes the schedule scannable.
+ */
+@theme {
+  --color-ink: #16181d;
+  --color-ink-soft: #5b6270;
+  --color-ink-faint: #8b93a3;
+  --color-surface: #ffffff;
+  --color-canvas: #f6f7f9;
+  --color-line: #e3e6ec;
+  --color-accent: #2f6f5e;
+  --color-accent-soft: #e4f0ec;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fdecea;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Inputs inherit the page font and never trigger iOS zoom-on-focus. */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+    font-size: max(16px, 1em);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply block text-sm font-medium text-[var(--color-ink-soft)] mb-1.5;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]
+      px-3.5 py-3 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)]
+      outline-none transition focus:border-[var(--color-accent)];
+  }
+
+  .btn-primary {
+    @apply w-full rounded-xl bg-[var(--color-accent)] px-4 py-3.5 font-semibold
+      text-white transition active:scale-[0.99] disabled:opacity-50
+      disabled:active:scale-100;
+  }
+
+  .btn-secondary {
+    @apply w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]
+      px-4 py-3.5 font-semibold text-[var(--color-ink)] transition
+      active:scale-[0.99] disabled:opacity-50;
+  }
+
+  .card {
+    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)];
+  }
+}
+
+/* The countdown must not reflow the row as digits change width. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
