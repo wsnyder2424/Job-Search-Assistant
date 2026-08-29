@@ -34,7 +34,7 @@ export default function DoseRow({ entry, now, timeZone, onToggle }: Props) {
   return (
     <label
       className={`flex cursor-pointer items-center gap-3.5 px-4 py-3.5 transition ${
-        given ? "bg-[var(--color-canvas)]" : ""
+        given ? "bg-[var(--color-bg-secondary)]" : ""
       }`}
     >
       {/* Color bar — the at-a-glance identity of the medication. */}
@@ -48,28 +48,33 @@ export default function DoseRow({ entry, now, timeZone, onToggle }: Props) {
         <span className="flex items-baseline gap-2">
           <span
             className={`truncate font-semibold ${
-              given ? "text-[var(--color-ink-faint)] line-through" : "text-[var(--color-ink)]"
+              given ? "text-[var(--color-fg-quaternary)] line-through" : "text-[var(--color-text-primary)]"
             }`}
           >
             {entry.medication.name}
           </span>
-          <span className="tabular shrink-0 text-sm text-[var(--color-ink-soft)]">
+          <span className="tabular shrink-0 text-sm text-[var(--color-text-tertiary)]">
             {timeLabel}
           </span>
         </span>
 
-        <span className="mt-0.5 block truncate text-sm text-[var(--color-ink-soft)]">
+        <span className="mt-0.5 block truncate text-sm text-[var(--color-text-tertiary)]">
           {given ? givenCaption(entry) : subtitle(entry, now, overdue, due)}
         </span>
       </span>
 
+      {/*
+        The design system's checkbox, left in the brand color. Tinting it with
+        the medication color was tempting — but a checked box in the red or
+        amber end of the palette reads as an error rather than as "done", and
+        the accent bar beside it already carries the medication's identity.
+      */}
       <input
         type="checkbox"
         checked={given}
         onChange={(event) => onToggle(event.target.checked)}
         aria-label={`Mark ${entry.medication.name} for ${entry.pet.name} at ${timeLabel} as given`}
-        className="h-6 w-6 shrink-0 rounded-md accent-[var(--color-accent)]"
-        style={given ? undefined : { accentColor: color.hex }}
+        className="checkbox"
       />
     </label>
   );

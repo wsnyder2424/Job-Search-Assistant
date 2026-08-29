@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tokens": "node scripts/build-tokens.mjs",
+    "prebuild": "node scripts/build-tokens.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

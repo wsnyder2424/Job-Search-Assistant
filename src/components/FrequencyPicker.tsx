@@ -136,8 +136,8 @@ export default function FrequencyPicker({ draft, onChange }: Props) {
             onClick={() => onChange({ ...draft, mode })}
             className={`rounded-full border px-3.5 py-2 text-sm font-medium transition ${
               draft.mode === mode
-                ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
+                ? "border-[var(--color-border-brand)] bg-[var(--color-bg-brand-solid)] text-white"
+                : "border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]"
             }`}
           >
             {label}
@@ -184,7 +184,7 @@ export default function FrequencyPicker({ draft, onChange }: Props) {
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-xs text-[var(--color-ink-faint)]">
+          <p className="mt-1.5 text-xs text-[var(--color-fg-quaternary)]">
             Counted from the start time, so doses land at the same clock times
             each cycle.
           </p>
@@ -237,8 +237,8 @@ export default function FrequencyPicker({ draft, onChange }: Props) {
                   }
                   className={`h-10 flex-1 rounded-lg border text-xs font-semibold transition ${
                     selected
-                      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                      : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
+                      ? "border-[var(--color-border-brand)] bg-[var(--color-bg-brand-solid)] text-white"
+                      : "border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]"
                   }`}
                 >
                   {name.slice(0, 1)}
@@ -264,7 +264,7 @@ export default function FrequencyPicker({ draft, onChange }: Props) {
                   aria-label={`Dose ${index + 1} time`}
                   onChange={(event) => setTimeAt(index, event.target.value)}
                 />
-                <span className="w-20 shrink-0 text-sm text-[var(--color-ink-faint)]">
+                <span className="w-20 shrink-0 text-sm text-[var(--color-fg-quaternary)]">
                   {safeLabel(time)}
                 </span>
               </div>
@@ -274,7 +274,7 @@ export default function FrequencyPicker({ draft, onChange }: Props) {
       )}
 
       {draft.mode === "as_needed" && (
-        <p className="rounded-xl bg-[var(--color-canvas)] px-3.5 py-3 text-sm text-[var(--color-ink-soft)]">
+        <p className="rounded-xl bg-[var(--color-bg-secondary)] px-3.5 py-3 text-sm text-[var(--color-text-tertiary)]">
           As-needed medications stay off the schedule. You can still log each
           time you give one.
         </p>

@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="mx-auto min-h-dvh w-full max-w-md bg-[var(--color-canvas)]">
+        <div className="mx-auto min-h-dvh w-full max-w-md bg-[var(--color-bg-secondary)]">
           {children}
         </div>
       </body>

@@ -55,8 +55,8 @@ export default function AddMedicationForm({
                 onClick={() => setPetId(pet.id)}
                 className={`rounded-full border px-3.5 py-2 text-sm font-medium transition ${
                   petId === pet.id
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                    : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
+                    ? "border-[var(--color-border-brand)] bg-[var(--color-bg-brand-solid)] text-white"
+                    : "border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]"
                 }`}
               >
                 {pet.name}

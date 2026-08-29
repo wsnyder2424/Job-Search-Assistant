@@ -55,19 +55,19 @@ export default function InviteSheet({ householdId, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-t-3xl bg-[var(--color-surface)] p-6 pb-8"
+        className="w-full max-w-md rounded-t-3xl bg-[var(--color-bg-primary)] p-6 pb-8"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 className="text-xl font-bold tracking-tight">Invite a caregiver</h2>
-        <p className="mt-1.5 text-sm text-[var(--color-ink-soft)]">
+        <p className="mt-1.5 text-sm text-[var(--color-text-tertiary)]">
           They enter this code when they sign up. It works once and expires in a
           week.
         </p>
 
         <div className="my-6 text-center">
-          {busy && <p className="text-[var(--color-ink-soft)]">Creating a code…</p>}
+          {busy && <p className="text-[var(--color-text-tertiary)]">Creating a code…</p>}
           {error && (
-            <p role="alert" className="text-sm text-[var(--color-danger)]">
+            <p role="alert" className="text-sm text-[var(--color-text-error-primary)]">
               {error}
             </p>
           )}

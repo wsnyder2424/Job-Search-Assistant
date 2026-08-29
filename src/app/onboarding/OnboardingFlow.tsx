@@ -111,7 +111,7 @@ export default function OnboardingFlow({
         <div className="flex flex-1 flex-col justify-center gap-6">
           <header>
             <h1 className="text-3xl font-bold tracking-tight">Let&apos;s get set up</h1>
-            <p className="mt-2 text-[var(--color-ink-soft)]">
+            <p className="mt-2 text-[var(--color-text-tertiary)]">
               Start a household for your pet, or join one someone already made.
             </p>
           </header>
@@ -131,7 +131,7 @@ export default function OnboardingFlow({
         <div className="flex flex-1 flex-col justify-center gap-5">
           <header>
             <h1 className="text-2xl font-bold tracking-tight">Join a household</h1>
-            <p className="mt-2 text-[var(--color-ink-soft)]">
+            <p className="mt-2 text-[var(--color-text-tertiary)]">
               Enter the code from whoever set up the pet.
             </p>
           </header>
@@ -152,7 +152,7 @@ export default function OnboardingFlow({
           </div>
 
           {error && (
-            <p role="alert" className="rounded-xl bg-[var(--color-danger-soft)] px-3.5 py-3 text-sm text-[var(--color-danger)]">
+            <p role="alert" className="rounded-xl bg-[var(--color-bg-error-primary)] px-3.5 py-3 text-sm text-[var(--color-text-error-primary)]">
               {error}
             </p>
           )}
@@ -174,7 +174,7 @@ export default function OnboardingFlow({
             <h1 className="text-2xl font-bold tracking-tight">
               {existingHousehold ? "Add a pet" : "Who are we caring for?"}
             </h1>
-            <p className="mt-2 text-[var(--color-ink-soft)]">
+            <p className="mt-2 text-[var(--color-text-tertiary)]">
               You can add more pets later.
             </p>
           </header>
@@ -204,8 +204,8 @@ export default function OnboardingFlow({
                   onClick={() => setSpecies(option)}
                   className={`rounded-full border px-3.5 py-2 text-sm font-medium transition ${
                     species === option
-                      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-                      : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
+                      ? "border-[var(--color-border-brand)] bg-[var(--color-bg-brand-solid)] text-white"
+                      : "border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]"
                   }`}
                 >
                   {option}
@@ -215,7 +215,7 @@ export default function OnboardingFlow({
           </div>
 
           {error && (
-            <p role="alert" className="rounded-xl bg-[var(--color-danger-soft)] px-3.5 py-3 text-sm text-[var(--color-danger)]">
+            <p role="alert" className="rounded-xl bg-[var(--color-bg-error-primary)] px-3.5 py-3 text-sm text-[var(--color-text-error-primary)]">
               {error}
             </p>
           )}
@@ -232,7 +232,7 @@ export default function OnboardingFlow({
             <h1 className="text-2xl font-bold tracking-tight">
               {petName ? `${petName}'s first medication` : "Add a medication"}
             </h1>
-            <p className="mt-2 text-[var(--color-ink-soft)]">
+            <p className="mt-2 text-[var(--color-text-tertiary)]">
               Snap the label and we&apos;ll fill this in, or type it yourself.
             </p>
           </header>

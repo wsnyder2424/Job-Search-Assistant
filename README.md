@@ -76,6 +76,11 @@ setup screen rather than an error.
 ## Architecture
 
 ```
+design/
+  tokens.json    Design tokens exported from Figma Variables — edit this
+  README.md      How to re-export, and what the generator validates
+scripts/
+  build-tokens.mjs  Generates the CSS + palette, and checks contrast
 src/
   core/          Platform-agnostic domain logic — no React, DOM or Node APIs.
     types.ts       Medication, Pet, Dose, Frequency, ScheduleEntry
@@ -88,10 +93,24 @@ src/
   lib/supabase/  Browser, server and proxy clients
   components/    Shared UI (medication form, dose row, pickers)
   app/           Routes: /login, /onboarding, /home, /home/add
+    globals.css       Component recipes built on the tokens
+    tokens.generated.css   Generated — do not edit
 supabase/
   schema.sql     Tables, RLS policies, invite functions
   tests/         Applies the schema to a real Postgres and asserts isolation
 ```
+
+### Design system
+
+The visual language comes from a Figma file that uses Figma Variables in the
+Untitled UI token structure. `design/tokens.json` is the committed export, and
+`npm run tokens` regenerates the CSS custom properties and the medication
+palette from it; `npm run build` runs that first so a stale export cannot ship.
+
+The generator validates as well as formats — it checks each medication color
+for contrast against its own tint and its own fill, and rejects any that sits
+too close to the brand color to still read as a medication. See
+[`design/README.md`](design/README.md) for the re-export steps and the rules.
 
 ### Why `src/core` is separate
 
@@ -126,6 +145,7 @@ using `Intl`, and the schedule tests cover a DST spring-forward explicitly.
 ```bash
 npm test          # domain logic — schedule, frequency, colors, countdown
 npm run typecheck
+npm run tokens    # regenerates design tokens, and validates the palette
 npm run build
 ```
 

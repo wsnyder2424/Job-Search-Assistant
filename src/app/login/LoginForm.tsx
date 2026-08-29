@@ -75,7 +75,7 @@ export default function LoginForm() {
             placeholder="Sam"
             autoComplete="name"
           />
-          <p className="mt-1.5 text-xs text-[var(--color-ink-faint)]">
+          <p className="mt-1.5 text-xs text-[var(--color-fg-quaternary)]">
             Shown on the schedule next to doses you give.
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function LoginForm() {
       {error && (
         <p
           role="alert"
-          className="rounded-xl bg-[var(--color-danger-soft)] px-3.5 py-3 text-sm text-[var(--color-danger)]"
+          className="rounded-xl bg-[var(--color-bg-error-primary)] px-3.5 py-3 text-sm text-[var(--color-text-error-primary)]"
         >
           {error}
         </p>
@@ -126,7 +126,7 @@ export default function LoginForm() {
       {notice && (
         <p
           role="status"
-          className="rounded-xl bg-[var(--color-accent-soft)] px-3.5 py-3 text-sm text-[var(--color-accent)]"
+          className="rounded-xl bg-[var(--color-bg-brand-primary)] px-3.5 py-3 text-sm text-[var(--color-text-brand-secondary)]"
         >
           {notice}
         </p>
@@ -138,7 +138,7 @@ export default function LoginForm() {
 
       <button
         type="button"
-        className="w-full py-2 text-sm text-[var(--color-ink-soft)] underline underline-offset-4"
+        className="w-full py-2 text-sm text-[var(--color-text-tertiary)] underline underline-offset-4"
         onClick={() => {
           setMode(mode === "signin" ? "signup" : "signin");
           setError(null);

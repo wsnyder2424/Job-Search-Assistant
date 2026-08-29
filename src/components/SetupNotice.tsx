@@ -7,7 +7,7 @@ export default function SetupNotice() {
     <main className="flex min-h-dvh flex-col justify-center gap-5 px-6 py-12">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Almost there</h1>
-        <p className="mt-2 text-[var(--color-ink-soft)]">
+        <p className="mt-2 text-[var(--color-text-tertiary)]">
           This app needs a Supabase project before it can store anything.
         </p>
       </div>
@@ -33,7 +33,7 @@ export default function SetupNotice() {
         </li>
       </ol>
 
-      <p className="text-sm text-[var(--color-ink-faint)]">
+      <p className="text-sm text-[var(--color-fg-quaternary)]">
         Full instructions are in the README.
       </p>
     </main>

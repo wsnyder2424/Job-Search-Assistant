@@ -1,24 +1,16 @@
 @import "tailwindcss";
+@import "./tokens.generated.css";
 
 /*
- * Mobile-first palette. Surfaces stay neutral so the medication colors are the
- * only saturated thing on screen — that is what makes the schedule scannable.
+ * Component recipes built on the design system's tokens.
+ *
+ * Every value here comes from tokens.generated.css — do not hardcode a hex,
+ * radius or size. Change design/tokens.json and run `npm run tokens` instead.
+ *
+ * Component geometry follows the Figma components: buttons and inputs use
+ * radius-md with shadow-xs, cards use radius-xl, and the checkbox is a
+ * radius-xs square that fills with the brand color when checked.
  */
-@theme {
-  --color-ink: #16181d;
-  --color-ink-soft: #5b6270;
-  --color-ink-faint: #8b93a3;
-  --color-surface: #ffffff;
-  --color-canvas: #f6f7f9;
-  --color-line: #e3e6ec;
-  --color-accent: #2f6f5e;
-  --color-accent-soft: #e4f0ec;
-  --color-danger: #c0392b;
-  --color-danger-soft: #fdecea;
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-}
 
 @layer base {
   html {
@@ -26,8 +18,8 @@
   }
 
   body {
-    background-color: var(--color-canvas);
-    color: var(--color-ink);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
@@ -42,36 +34,129 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-border-brand);
     outline-offset: 2px;
   }
 }
 
 @layer components {
   .field-label {
-    @apply block text-sm font-medium text-[var(--color-ink-soft)] mb-1.5;
+    display: block;
+    margin-bottom: var(--ds-spacing-sm);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
   }
 
+  /* Input — Untitled UI text input: radius-md, border-primary, shadow-xs. */
   .field {
-    @apply w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]
-      px-3.5 py-3 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)]
-      outline-none transition focus:border-[var(--color-accent)];
+    width: 100%;
+    padding: 10px var(--ds-spacing-lg);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-xs);
+    outline: none;
+    transition: box-shadow 120ms ease, border-color 120ms ease;
+  }
+
+  .field::placeholder {
+    color: var(--color-text-placeholder);
+  }
+
+  .field:focus {
+    border-color: var(--color-border-brand);
+    /* The system's focus ring: a 4px brand halo outside a 1px brand border. */
+    box-shadow: 0 0 0 4px var(--color-bg-brand-secondary), var(--shadow-xs);
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    display: block;
+    width: 100%;
+    padding: 10px var(--ds-spacing-xl);
+    border-radius: var(--radius-md);
+    font-size: var(--text-md);
+    line-height: var(--text-md--line-height);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-xs);
+    transition: background-color 120ms ease, transform 60ms ease;
   }
 
   .btn-primary {
-    @apply w-full rounded-xl bg-[var(--color-accent)] px-4 py-3.5 font-semibold
-      text-white transition active:scale-[0.99] disabled:opacity-50
-      disabled:active:scale-100;
+    background-color: var(--color-bg-brand-solid);
+    color: var(--color-text-white);
+    border: 1px solid var(--color-bg-brand-solid);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.99);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-bg-brand-solid-hover);
   }
 
   .btn-secondary {
-    @apply w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]
-      px-4 py-3.5 font-semibold text-[var(--color-ink)] transition
-      active:scale-[0.99] disabled:opacity-50;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-primary);
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.99);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-bg-primary-hover);
+  }
+
+  .btn-primary:disabled,
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    transform: none;
   }
 
   .card {
-    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)];
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-bg-primary);
+  }
+
+  /*
+   * Checkbox — the app's most-used control, so it is drawn rather than left to
+   * the platform. The unchecked box shows border-primary on bg-primary; the
+   * checked box fills with `--checkbox-fill`, which each dose row sets to its
+   * medication color so the check reads as that medication.
+   */
+  .checkbox {
+    --checkbox-fill: var(--color-bg-brand-solid);
+    appearance: none;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-xs);
+    background-color: var(--color-bg-primary);
+    box-shadow: var(--shadow-xs);
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  .checkbox:checked {
+    background-color: var(--checkbox-fill);
+    border-color: var(--checkbox-fill);
+    /* Untitled UI's check glyph, tinted to the foreground-on-fill color. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M11.6667 3.5L5.25001 9.91667L2.33334 7' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: 0.875rem 0.875rem;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .checkbox:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--color-bg-brand-secondary), var(--shadow-xs);
   }
 }
 

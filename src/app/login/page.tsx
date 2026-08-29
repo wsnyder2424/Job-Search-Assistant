@@ -17,11 +17,11 @@ export default async function LoginPage() {
   return (
     <main className="flex min-h-dvh flex-col justify-center px-6 py-12">
       <header className="mb-8">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-accent)] text-2xl">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-bg-brand-secondary)] text-2xl">
           🐾
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Dosely</h1>
-        <p className="mt-2 text-[var(--color-ink-soft)]">
+        <p className="mt-2 text-[var(--color-text-tertiary)]">
           Every dose, every pet — and everyone who looks after them, on the same
           schedule.
         </p>

@@ -180,11 +180,11 @@ export default function ScheduleView({
 
   return (
     <div className="min-h-dvh pb-28">
-      <header className="sticky top-0 z-10 border-b border-[var(--color-line)] bg-[var(--color-canvas)]/95 px-5 pt-5 pb-3 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-[var(--color-border-secondary)] bg-[var(--color-bg-secondary)]/95 px-5 pt-5 pb-3 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-xl font-bold tracking-tight">{householdName}</h1>
-            <p className="text-sm text-[var(--color-ink-soft)]">
+            <p className="text-sm text-[var(--color-text-tertiary)]">
               {memberCount === 1
                 ? "Just you so far"
                 : `${memberCount} people caring for ${pets.length === 1 ? pets[0]?.name ?? "your pet" : "your pets"}`}
@@ -193,7 +193,7 @@ export default function ScheduleView({
           <button
             type="button"
             onClick={() => setShowInvite(true)}
-            className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2 text-sm font-medium"
+            className="shrink-0 rounded-full border border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] px-3.5 py-2 text-sm font-medium"
           >
             Invite
           </button>
@@ -227,10 +227,10 @@ export default function ScheduleView({
 
         {shownGroups.map((group) => (
           <section key={group.dayNumber} className="mt-6">
-            <h2 className="mb-2 px-1 text-sm font-semibold text-[var(--color-ink-soft)]">
+            <h2 className="mb-2 px-1 text-sm font-semibold text-[var(--color-text-tertiary)]">
               {dayHeading(group.dayNumber, todayNumber)}
             </h2>
-            <div className="card divide-y divide-[var(--color-line)] overflow-hidden">
+            <div className="card divide-y divide-[var(--color-border-secondary)] overflow-hidden">
               {group.entries.map((entry) => (
                 <DoseRow
                   key={entry.key}
@@ -248,7 +248,7 @@ export default function ScheduleView({
           <button
             type="button"
             onClick={() => setShowWholeWeek((current) => !current)}
-            className="mt-5 w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-ink-soft)]"
+            className="mt-5 w-full rounded-xl border border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] px-4 py-3 text-sm font-medium text-[var(--color-text-tertiary)]"
           >
             {showWholeWeek
               ? "Show less"
@@ -257,13 +257,13 @@ export default function ScheduleView({
         )}
 
         {medications.length === 0 && (
-          <p className="mt-8 text-center text-[var(--color-ink-soft)]">
+          <p className="mt-8 text-center text-[var(--color-text-tertiary)]">
             No medications yet.
           </p>
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md border-t border-[var(--color-line)] bg-[var(--color-surface)]/95 px-5 py-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 mx-auto max-w-md border-t border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)]/95 px-5 py-3 backdrop-blur">
         <Link href="/home/add" className="btn-primary block text-center">
           Add a medication
         </Link>
@@ -292,8 +292,8 @@ function PetChip({
       onClick={onClick}
       className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
         active
-          ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-white"
-          : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
+          ? "border-[var(--color-text-primary)] bg-[var(--color-text-primary)] text-white"
+          : "border-[var(--color-border-secondary)] bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]"
       }`}
     >
       {label}
@@ -326,10 +326,10 @@ function NextUpCard({
           {overdue ? "Overdue" : "Next up"}
         </p>
 
-        <p className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-ink)]">
+        <p className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
           {entry.medication.name}
         </p>
-        <p className="text-[var(--color-ink-soft)]">
+        <p className="text-[var(--color-text-tertiary)]">
           for {entry.pet.name}
           {entry.medication.directions ? ` · ${entry.medication.directions}` : ""}
         </p>
@@ -364,7 +364,7 @@ function EmptyNextUp({ hasMedications }: { hasMedications: boolean }) {
       <p className="mt-2 font-semibold">
         {hasMedications ? "All caught up" : "Nothing scheduled yet"}
       </p>
-      <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+      <p className="mt-1 text-sm text-[var(--color-text-tertiary)]">
         {hasMedications
           ? "Every dose in the next week is checked off."
           : "Add a medication to start the schedule."}

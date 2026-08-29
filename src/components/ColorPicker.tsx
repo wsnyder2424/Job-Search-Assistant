@@ -38,7 +38,7 @@ export default function ColorPicker({ value, takenColorIds = [], onChange }: Pro
               onClick={() => onChange(color.id)}
               className={`relative aspect-square rounded-full transition ${
                 selected
-                  ? "ring-2 ring-[var(--color-ink)] ring-offset-2"
+                  ? "ring-2 ring-[var(--color-text-primary)] ring-offset-2"
                   : "ring-1 ring-black/5"
               } ${inUse ? "opacity-35" : ""}`}
               style={{ backgroundColor: color.hex }}
@@ -56,7 +56,7 @@ export default function ColorPicker({ value, takenColorIds = [], onChange }: Pro
           );
         })}
       </div>
-      <p className="mt-1.5 text-xs text-[var(--color-ink-faint)]">
+      <p className="mt-1.5 text-xs text-[var(--color-fg-quaternary)]">
         Faded colors are already used by another medication.
       </p>
     </div>

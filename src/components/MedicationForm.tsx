@@ -117,11 +117,11 @@ export default function MedicationForm({
       <PhotoCapture anchorTime={startTime} onExtracted={applyExtraction} />
 
       <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
-        <span className="text-xs uppercase tracking-wide text-[var(--color-ink-faint)]">
+        <span className="h-px flex-1 bg-[var(--color-border-secondary)]" />
+        <span className="text-xs uppercase tracking-wide text-[var(--color-fg-quaternary)]">
           or type it in
         </span>
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
+        <span className="h-px flex-1 bg-[var(--color-border-secondary)]" />
       </div>
 
       <div>
@@ -190,10 +190,10 @@ export default function MedicationForm({
       </div>
 
       <div>
-        <label className="flex items-center gap-2.5 text-sm text-[var(--color-ink-soft)]">
+        <label className="flex items-center gap-2.5 text-sm text-[var(--color-text-tertiary)]">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-[var(--color-accent)]"
+            className="h-4 w-4 accent-[var(--color-bg-brand-solid)]"
             checked={hasEnd}
             onChange={(event) => setHasEnd(event.target.checked)}
           />
@@ -213,15 +213,15 @@ export default function MedicationForm({
 
       <ColorPicker value={colorId} takenColorIds={takenColorIds} onChange={setColorId} />
 
-      <div className="rounded-xl bg-[var(--color-canvas)] px-3.5 py-3 text-sm text-[var(--color-ink-soft)]">
-        <span className="font-medium text-[var(--color-ink)]">Schedule: </span>
+      <div className="rounded-xl bg-[var(--color-bg-secondary)] px-3.5 py-3 text-sm text-[var(--color-text-tertiary)]">
+        <span className="font-medium text-[var(--color-text-primary)]">Schedule: </span>
         {describeFrequency(frequency)}
       </div>
 
       {error && (
         <p
           role="alert"
-          className="rounded-xl bg-[var(--color-danger-soft)] px-3.5 py-3 text-sm text-[var(--color-danger)]"
+          className="rounded-xl bg-[var(--color-bg-error-primary)] px-3.5 py-3 text-sm text-[var(--color-text-error-primary)]"
         >
           {error}
         </p>

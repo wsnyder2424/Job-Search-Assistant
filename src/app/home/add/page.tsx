@@ -33,7 +33,7 @@ export default async function AddMedicationPage() {
     <main className="min-h-dvh px-6 py-8">
       <Link
         href="/home"
-        className="text-sm text-[var(--color-ink-soft)] underline underline-offset-4"
+        className="text-sm text-[var(--color-text-tertiary)] underline underline-offset-4"
       >
         ← Back to schedule
       </Link>

@@ -1,39 +1,31 @@
 /**
- * The medication palette. Each medication gets one of these so the schedule
- * can be read at a glance, and so a caregiver can match "the blue one" to a
- * pill without reading the label.
+ * The medication palette.
  *
- * Colors are chosen to stay distinguishable from one another and to carry
- * enough contrast against both the light and dark surfaces used in the UI.
- * They are stored by `id`, never by hex, so the palette can be re-tuned later
- * without migrating rows.
+ * Each medication gets one of these so the schedule can be read at a glance,
+ * and so a caregiver can match "the red one" to a pill without reading the
+ * label. Colors are stored by `id`, never by hex, so the palette can be
+ * re-themed without migrating any rows.
+ *
+ * The values themselves are generated from the design system — see
+ * `design/tokens.json` and `npm run tokens`. They are drawn from the system's
+ * categorical (`utility`) families, and the generator checks on every build
+ * that each one stays readable and stays distinguishable from the brand color.
  */
+
+import { MEDICATION_COLORS } from "./palette.generated";
 
 export interface MedicationColor {
   id: string;
   name: string;
-  /** Solid fill — dots, checkboxes, the row's accent bar. */
+  /** Solid fill — the accent bar, the checked checkbox, the hero countdown. */
   hex: string;
-  /** Tinted background for the row itself. */
+  /** Tinted background for the hero card. */
   softHex: string;
   /** Text/icon color that meets contrast on `hex`. */
   onHex: string;
 }
 
-export const MEDICATION_COLORS: MedicationColor[] = [
-  { id: "coral", name: "Coral", hex: "#E5484D", softHex: "#FEEBEC", onHex: "#FFFFFF" },
-  { id: "amber", name: "Amber", hex: "#B8730B", softHex: "#FEF3DA", onHex: "#FFFFFF" },
-  { id: "teal", name: "Teal", hex: "#0D7C77", softHex: "#DDF5F3", onHex: "#FFFFFF" },
-  { id: "indigo", name: "Indigo", hex: "#3E56C4", softHex: "#E6E9FB", onHex: "#FFFFFF" },
-  { id: "violet", name: "Violet", hex: "#8347B9", softHex: "#F3E9FB", onHex: "#FFFFFF" },
-  { id: "moss", name: "Moss", hex: "#3E7B36", softHex: "#E5F3E2", onHex: "#FFFFFF" },
-  { id: "rose", name: "Rose", hex: "#C2298A", softHex: "#FCE7F4", onHex: "#FFFFFF" },
-  { id: "sky", name: "Sky", hex: "#0B6FAF", softHex: "#E0F0FA", onHex: "#FFFFFF" },
-  { id: "rust", name: "Rust", hex: "#AD5217", softHex: "#FBEBE0", onHex: "#FFFFFF" },
-  { id: "plum", name: "Plum", hex: "#6E3A6B", softHex: "#F4E8F3", onHex: "#FFFFFF" },
-  { id: "olive", name: "Olive", hex: "#6B6B18", softHex: "#F3F3DC", onHex: "#FFFFFF" },
-  { id: "slate", name: "Slate", hex: "#4A5568", softHex: "#EDEFF3", onHex: "#FFFFFF" },
-];
+export { MEDICATION_COLORS };
 
 const DEFAULT_COLOR = MEDICATION_COLORS[0];
 
@@ -43,9 +35,10 @@ export function getColor(colorId: string | null | undefined): MedicationColor {
 
 /**
  * Pick a color for a new medication: the first one nobody in the household is
- * already using, so two meds never look alike until the palette runs out.
- * Past that, distribute deterministically by name so the same medication keeps
- * the same color across devices.
+ * already using. `MEDICATION_COLORS` is ordered by perceptual distance, so the
+ * first medications a household adds get the colors that look least alike.
+ * Past the end of the palette, distribute deterministically by name so the
+ * same medication keeps the same color across devices.
  */
 export function assignColor(
   takenColorIds: readonly string[],

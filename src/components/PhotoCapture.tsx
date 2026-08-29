@@ -106,8 +106,8 @@ export default function PhotoCapture({ anchorTime, onExtracted }: Props) {
           role="status"
           className={`mt-2.5 rounded-xl px-3.5 py-2.5 text-sm ${
             isError
-              ? "bg-[var(--color-danger-soft)] text-[var(--color-danger)]"
-              : "bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+              ? "bg-[var(--color-bg-error-primary)] text-[var(--color-text-error-primary)]"
+              : "bg-[var(--color-bg-brand-primary)] text-[var(--color-text-brand-secondary)]"
           }`}
         >
           {message}
