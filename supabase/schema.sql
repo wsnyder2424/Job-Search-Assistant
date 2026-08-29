@@ -175,12 +175,21 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
+  -- Where the name comes from depends on how they signed up: the email form
+  -- sends `display_name`, while Google returns `full_name` (and `name`). The
+  -- email prefix is the last resort so a profile always has something to show
+  -- next to "Given by ..." on the schedule.
+  -- Each candidate is trimmed and emptied-to-null on its own: a provider that
+  -- sends a blank name must fall through to the next option, not win the
+  -- coalesce with whitespace and leave the profile nameless.
   insert into public.profiles (id, display_name)
   values (
     new.id,
     coalesce(
-      new.raw_user_meta_data ->> 'display_name',
-      split_part(new.email, '@', 1)
+      nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'full_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'name'), ''),
+      nullif(split_part(coalesce(new.email, ''), '@', 1), '')
     )
   )
   on conflict (id) do nothing;

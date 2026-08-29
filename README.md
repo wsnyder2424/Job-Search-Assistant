@@ -25,6 +25,12 @@ checkbox. Checking the box records the dose against you, and everyone else in
 the household immediately sees "Given by Sam at 8:04 AM" — which is what stops
 a pet being double-dosed by two caregivers.
 
+**Signing up** — the first screen offers Google or an email and password. Either
+way the account exists before any pet does, so nothing a user types is ever held
+in limbo waiting for auth to finish. Whichever route they take, the display name
+that appears next to a dose is resolved by a database trigger — from Google's
+`full_name`, or from the name field on the email form.
+
 **Households** — each person has their own account, and a household is shared.
 Tap *Invite* to mint a one-time code; whoever enters it joins and sees the same
 pets, medications and schedule.
@@ -62,7 +68,36 @@ Fill in from **Project Settings → API**:
 Without `ANTHROPIC_API_KEY` the app still runs — the camera button reports that
 photo reading is unavailable and you type the medication in instead.
 
-### 4. Run
+### 4. Enable Google sign-in (optional)
+
+Email and password work with no extra setup. Google needs configuration in two
+consoles, and the app cannot do it for you.
+
+**In Google Cloud Console** — APIs & Services → Credentials → Create OAuth client
+ID → *Web application*:
+
+| Field | Value |
+| --- | --- |
+| Authorised JavaScript origins | `http://localhost:3000`, plus your deployed origin |
+| Authorised redirect URI | `https://<project-ref>.supabase.co/auth/v1/callback` |
+
+That redirect URI is the one people get wrong. Google redirects to **Supabase**,
+not to this app — Supabase then forwards to `/auth/callback` here. Putting the
+app's own URL in Google's box produces a `redirect_uri_mismatch`.
+
+**In the Supabase dashboard:**
+
+1. Authentication → Providers → Google → enable it, paste the client ID and
+   secret from above.
+2. Authentication → URL Configuration → set **Site URL** to your origin, and add
+   `http://localhost:3000/auth/callback` (plus the deployed equivalent) to
+   **Redirect URLs**. Supabase refuses to redirect anywhere not on that list, so
+   sign-in fails at the last step if it is missing.
+
+Failures come back to `/login` with the provider's own message rather than a
+blank screen, which makes a misconfigured redirect obvious.
+
+### 5. Run
 
 ```bash
 npm run dev
@@ -92,7 +127,7 @@ src/
   data/          Row mapping, server queries, server actions
   lib/supabase/  Browser, server and proxy clients
   components/    Shared UI (medication form, dose row, pickers)
-  app/           Routes: /login, /onboarding, /home, /home/add
+  app/           Routes: /login, /auth/callback, /onboarding, /home, /home/add
     globals.css       Component recipes built on the tokens
     tokens.generated.css   Generated — do not edit
 supabase/

@@ -25,3 +25,8 @@ echo "==> running RLS assertions"
 psql -v ON_ERROR_STOP=1 -f "$here/01_rls_test.sql" 2>&1 \
   | grep -E 'pass |FAIL|ERROR|ALL RLS' \
   | sed -E 's/^psql:[^ ]* //; s/NOTICE:  //'
+
+echo "==> running profile name assertions"
+psql -v ON_ERROR_STOP=1 -f "$here/02_profile_name_test.sql" 2>&1 \
+  | grep -E 'pass |FAIL|ERROR|ALL PROFILE' \
+  | sed -E 's/^psql:[^ ]* //; s/NOTICE:  //'
