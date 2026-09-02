@@ -296,11 +296,21 @@ Why: a pet on complex medication pulls at the owner's anxiety. The app should be
 
 One thing in Cocoon to NOT copy: subtitles set in all caps. Never use all-caps labels.
 
+_Read from the screens, 2026-09-02 (the local files above are not in the repo; this is what they show):_
+- The **row list** ("Welcome to Your Cocoon") is the model for a dose row. Each row: a pastel tint fill, a **small solid icon tile in the same hue** sitting on that tint, and label + chevron in the hue's dark step. That solid tile is where the Rx 500 step belongs — a chip, not a loose dot.
+- Cocoon's row text runs light for its background. **Hold to the 700 step** for Rx names; a caregiver reads them at 3am.
+- Only part of Cocoon is the voice worth matching: the pastel row list, the hand-made illustration, the serif wordmark, the barely-there gradient. Its **forms, buttons and section headers are stock iOS** — solid blue full-width buttons, gray system cards, all-caps labels. Do not take those.
+
 **NEVER MATCH — Polestar (iOS)**
 Mobbin: https://mobbin.com/apps/polestar-ios-07be2c37-2e4a-403b-af04-5567d2cac806/74afc19d-1e8f-48e6-9047-044da113edbc/screens
 Local copies: `references/never-match.png` · `references/polestar_sheet.jpg` (contact sheet) · full export in `design inspo/don't make it like this/` (121 screens).
 
 Why: hard corners, dark mode, stark, a brand color that feels like a warning, images cut off at the edges. Sleek, but no warmth. If a screen starts to feel like this, it's wrong even if it's clean.
+
+_Read from the screens, 2026-09-02:_
+- **The core failure is colour-as-status**: orange tiles mean unlocked / charging / locking, gray means inactive. This is exactly what §7 forbids for Rx colors, and it is the trap this product is closest to.
+- **Two places we could land on Polestar by accident.** (1) The Overdue color treatment (§11, open): a saturated full-bleed panel would be Polestar's orange "Locking" status bar. If Overdue takes color, a tint and an icon — never a filled alarm panel. (2) The Given confirmation (§11): keep it inside the round, not a takeover strip.
+- **Worth stealing, separate from the look:** Polestar's tile grid is glanceable — one big label, the state word directly beneath it, one icon. That information density is right; the execution is cold.
 
 ---
 
