@@ -7,6 +7,7 @@ Rules:
 - Do not reopen anything in §8 (Closed decisions) or resurrect anything in §9 (Graveyard).
 - The "Open conflicts to resolve before building" section at the end of design.md lists decisions that are deliberately unresolved. Ask Whitney about them before building anything that depends on them. Do not pick a default silently.
 - Anything marked _TODO_ in design.md: ask, don't guess.
+- All UI text is sentence case (design.md §7). Never Title Case, never all caps.
 - Design tokens come from the Figma file named in §5. Reference tokens by name in code.
 - Visual references live in `references/` and `design inspo/`. §12 explains what to take and what to avoid; match the attribute, not the screenshot.
 

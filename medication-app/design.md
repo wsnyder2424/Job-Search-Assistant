@@ -122,7 +122,11 @@ Tokens and actual specs, pulled from the Figma file **Pet-medication-app** (`w1f
 - #BBF7D0 is a pale tint. It is a **surface** color — backgrounds, the brand highlight, the owner's visual treatment — never a text or icon color, and never a solid button fill with white text. Text on a mint surface is text-primary #171717. Brand-colored text or icons on white use green-700 #15803d or darker.
 - Because success also maps to green (#16a34a), the brand tint and the success state will look related. Acceptable for v1; do not use the mint tint to mean "given".
 
-**Status** — error #dc2626 / bg #fef2f2 · warning #ca8a04 / bg #fefce8 · success #16a34a / bg #f0fdf4.
+**Status** — error #dc2626 / bg #fef2f2 · success #16a34a / bg #f0fdf4.
+
+**Warning is orange** (taken from the Polestar reference, §12 — the one thing worth keeping from it). It behaves like the mint brand: a **surface**, never a text color. `warning` #f97316 (Orange/500) fills a warning toast or chip; text on it is text-primary #171717. `warning-text` #c2410c (Orange/700) is for warning text on white. `warning-bg` #ffedd5 (Orange/100) is the quiet tint.
+- **Warning is for warning toasts and chips only** — never normal functions, navigation, or ordinary messaging. Polestar's mistake was using it for "locking" and "unlocked"; a routine state must never wear it.
+- ⚠️ This collides with the Rx palette — see open conflict 10.
 
 **Rx colors** — the app assigns, the owner can swap. Max 16. Assigned **in this order**, so the first few Rx in any course are maximally distinct from each other and from the mint brand. Green is excluded (the brand is a green tint).
 
@@ -148,6 +152,8 @@ Tokens and actual specs, pulled from the Figma file **Pet-medication-app** (`w1f
 | 16 | Lime | #ecfccb | #84cc16 | #4d7c0f |
 
 Rules: an Rx color is never reused within one course. Color is always paired with the Rx name — never color alone (color-blind caregivers, and the guest who has never seen the app). Rx colors are identity, not status: do not use red/amber/green from this table to mean error/warning/success.
+
+**No per-Rx icon in v1.** An Rx is identified by its color chip and its name — that is the whole pairing. Cocoon's rows put an icon inside the tint; ours do not. (This is separate from the four **round-state** icons in §11 — Given, Not given, Skipped, Overdue — which still exist.) The **Rx color chip is a small solid tile at the 500 step**, sitting on the 100 surface, with the name in 700.
 
 **Shadows** — shadow-xs (0 1 2, 5% black); shadow-lg (3-layer). Skeuomorphic inner-border variant exists for buttons.
 
@@ -175,6 +181,7 @@ Explicit rules and boundaries.
 - Pair an Rx color with the Rx name. Color never appears alone.
 - Keep every notification to three actions or fewer.
 - Keep given rounds in their Rx colors.
+- **Write every piece of UI text in sentence case.** Screen titles, labels, buttons, notifications, empty states, errors — all of it. "Did Aga get her meds?", not "Did Aga Get Her Meds?". Proper nouns and the pet's name keep their capitals.
 
 **Never**
 - Auto-save a dose amount, time, or instruction the owner hasn't seen and confirmed.
@@ -183,7 +190,7 @@ Explicit rules and boundaries.
 - Show more than one round as "next".
 - Use Rx colors to mean status (error / warning / success), or the mint brand tint to mean Given.
 - Add a screen, tab, or view that competes with the dose screen for attention.
-- Set labels or subtitles in all caps.
+- Set labels or subtitles in all caps, or any UI text in Title Case. Sentence case everywhere (see Always).
 - Use hard (0–4px) corners, dark surfaces as the default theme, or crop images at the edges.
 
 ## 8. Closed decisions
@@ -310,7 +317,7 @@ Why: hard corners, dark mode, stark, a brand color that feels like a warning, im
 _Read from the screens, 2026-09-02:_
 - **The core failure is colour-as-status**: orange tiles mean unlocked / charging / locking, gray means inactive. This is exactly what §7 forbids for Rx colors, and it is the trap this product is closest to.
 - **Two places we could land on Polestar by accident.** (1) The Overdue color treatment (§11, open): a saturated full-bleed panel would be Polestar's orange "Locking" status bar. If Overdue takes color, a tint and an icon — never a filled alarm panel. (2) The Given confirmation (§11): keep it inside the round, not a takeover strip.
-- **Worth stealing, separate from the look:** Polestar's tile grid is glanceable — one big label, the state word directly beneath it, one icon. That information density is right; the execution is cold.
+- **Worth stealing, separate from the look:** Polestar's tile grid is glanceable — one big label, the state word directly beneath it, one icon. That information density is right; the execution is cold. **Parked, not rejected** — no known use yet, but do not rule it out.
 
 ---
 
@@ -332,4 +339,6 @@ These are deliberately unresolved. Do not resolve them silently — ask Whitney.
 6. **Is the 30-minute window symmetric?** Read as ±30 (markable from due−30, Overdue at due+30). If "30 min window" meant 30 minutes *after* due only, the early-marking rule needs its own answer.
 7. **§12 now contradicts §5 on the display face.** §12 says display type is "playful and **serif**"; League Spartan is a geometric sans. The choice stands — §12's attribute line should be amended so the doc has one answer, not two.
 8. **What can a partner with an account do?** Mark doses only, or also edit the course, invite guests, and end a course? This is the permission model, and it has to be settled before the schema.
+10. **Warning-orange collides with the Rx palette.** Warning is now orange (§5), but the Rx list carries **Orange #f97316 at position 6** — the identical hue — and **Amber #f59e0b at position 3**, early enough to appear in most courses. A caregiver seeing an amber or orange Rx chip next to an orange warning chip gets exactly the color-as-status confusion §7 forbids. Proposed: **drop Orange from the Rx 16** (backfilling with a 16th hue) and **move Amber later in the assignment order** so the first few Rx in a course stay clear of it. Needs your call — the alternative is a non-orange warning.
+
 9. **Guest name inheritance is a trade-off worth naming.** If Friday's sitter and a neighbour open the same link, every Given records the first name captured. Consistent with §8's "anyone holding the link can mark doses", but it means Given can name the wrong person. Confirm it is accepted, as §8 accepts the link trade-off.
