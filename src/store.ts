@@ -27,6 +27,8 @@ export const launchPlane = () => {
   flight.startedAt = performance.now() / 1000
 }
 
+let hoverTimer: number | undefined
+
 const validId = (id: string | null) =>
   id && islands.some((i) => i.id === id) ? id : null
 
@@ -58,7 +60,23 @@ export const useCity = create<CityState>((set) => ({
     writeHash(next)
     set({ selected: next, transitioning: true })
   },
-  hover: (id) => set({ hovered: validId(id) }),
+  hover: (id) => {
+    const next = validId(id)
+    if (hoverTimer !== undefined) {
+      window.clearTimeout(hoverTimer)
+      hoverTimer = undefined
+    }
+    if (next === null) {
+      // Clearing is deferred: the label floats above its island, so travelling
+      // from one to the other briefly hovers nothing at all.
+      hoverTimer = window.setTimeout(() => {
+        hoverTimer = undefined
+        set({ hovered: null })
+      }, 140)
+    } else {
+      set({ hovered: next })
+    }
+  },
   setTransitioning: (transitioning) => set({ transitioning }),
   toast: null,
   showToast: (message) => {

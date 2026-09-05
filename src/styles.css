@@ -84,7 +84,9 @@ canvas { display: block; touch-action: none; }
     border-color 1.4s linear,
     box-shadow 1.4s linear,
     opacity 0.5s var(--ease),
-    transform 0.5s var(--ease);
+    transform 0.5s var(--ease),
+    gap 0.34s var(--ease),
+    padding 0.34s var(--ease);
 }
 
 /* --------------------------------------------------------------- boot -- */
@@ -308,12 +310,15 @@ canvas { display: block; touch-action: none; }
 
 /* ------------------------------------------------------ island labels -- */
 
+/* At rest each island is marked only by its pin — a ring of six name tiles
+   competes with the city it is supposed to be labelling. Hover (or keyboard
+   focus) expands the pin into the full name. */
 .island-label {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 14px 8px 11px;
+  gap: 0;
+  padding: 7px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -325,6 +330,12 @@ canvas { display: block; touch-action: none; }
   cursor: pointer;
   white-space: nowrap;
   transform-origin: center bottom;
+}
+
+.island-label[data-active='true'],
+.island-label:focus-visible {
+  gap: 9px;
+  padding: 8px 14px 8px 11px;
 }
 .island-label[data-hidden='true'] { opacity: 0; pointer-events: none; transform: translateY(6px); }
 .island-label[data-dimmed='true'] { opacity: 0.18; }
@@ -355,7 +366,28 @@ canvas { display: block; touch-action: none; }
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   flex: none;
 }
-.island-label__text { display: flex; flex-direction: column; gap: 1px; text-align: left; }
+.island-label__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+  /* max-width rather than display:none so the name can animate open and stays
+     in the accessibility tree the whole time. */
+  max-width: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.34s var(--ease),
+    max-height 0.34s var(--ease),
+    opacity 0.22s var(--ease);
+}
+.island-label[data-active='true'] .island-label__text,
+.island-label:focus-visible .island-label__text {
+  max-width: 280px;
+  max-height: 80px;
+  opacity: 1;
+}
 .island-label__name {
   font-family: var(--font-display);
   font-weight: 600;
@@ -622,6 +654,11 @@ canvas { display: block; touch-action: none; }
 .toast[data-open='true'] { opacity: 1; transform: translate(-50%, 0); }
 
 /* ------------------------------------------------------------- mobile -- */
+
+@media (hover: none) {
+  .island-label { gap: 9px; padding: 8px 14px 8px 11px; }
+  .island-label__text { max-width: 280px; max-height: 80px; opacity: 1; }
+}
 
 @media (max-width: 900px) {
   .panel-scrim {
