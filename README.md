@@ -24,6 +24,16 @@ npm run typecheck
 `dist/` is plain static files with relative paths, so it drops onto GitHub
 Pages, Netlify, Vercel or any static host with no configuration.
 
+```bash
+npm run build:single   # dist-single/portfolio-archipelago.html
+```
+
+Inlines the whole build — three.js, React, the shaders, the stylesheet — into
+one self-contained HTML file you can open off disk or paste into a host that
+only takes a single file. Its only network request is the two Google fonts. If
+you use it, put `resume.pdf` beside it or point `identity.resumeHref` at an
+absolute URL, since that link stays relative.
+
 ---
 
 ## Everything you need to edit is in two places
