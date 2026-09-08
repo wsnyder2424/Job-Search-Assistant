@@ -30,7 +30,7 @@ npm run build:single   # dist-single/portfolio-archipelago.html
 
 Inlines the whole build — three.js, React, the shaders, the stylesheet — into
 one self-contained HTML file you can open off disk or paste into a host that
-only takes a single file. Its only network request is the two Google fonts. If
+only takes a single file. Its only network request is the DM Sans webfont. If
 you use it, put `resume.pdf` beside it or point `identity.resumeHref` at an
 absolute URL, since that link stays relative.
 

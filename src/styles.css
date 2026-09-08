@@ -7,8 +7,13 @@
  * ========================================================================== */
 
 :root {
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* One family throughout. With no serif/sans contrast to lean on, hierarchy
+     is carried by weight and tracking instead — display sizes take a heavier
+     weight and noticeably tighter letter-spacing, since DM Sans is drawn wide
+     and reads loose at large sizes without it. The two tokens stay separate so
+     a second face can be reintroduced without touching every rule. */
+  --font-display: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --night: 0;
   --radius: 18px;
@@ -128,12 +133,12 @@ canvas { display: block; touch-action: none; }
 
 .intro__name {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(2.6rem, 8vw, 5.4rem);
-  line-height: 1;
+  line-height: 0.98;
   margin: 0;
   color: #fffdf8;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.042em;
   text-shadow: 0 4px 40px rgba(10, 16, 30, 0.55);
 }
 .intro__title {
@@ -196,7 +201,7 @@ canvas { display: block; touch-action: none; }
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
 }
 .wordmark__title {
   font-size: 0.66rem;
@@ -392,7 +397,7 @@ canvas { display: block; touch-action: none; }
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.9rem;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.014em;
 }
 .island-label__sub {
   font-size: 0.6rem;
@@ -461,10 +466,10 @@ canvas { display: block; touch-action: none; }
 .panel__title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.85rem;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  line-height: 1.14;
+  letter-spacing: -0.028em;
 }
 .panel__close {
   flex: none;
@@ -539,11 +544,11 @@ canvas { display: block; touch-action: none; }
 .metrics li { display: flex; flex-direction: column; gap: 6px; }
 .metrics__value {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.7rem;
   line-height: 1;
   color: var(--accent);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.032em;
 }
 .metrics__label {
   font-size: 0.64rem;
@@ -589,7 +594,8 @@ canvas { display: block; touch-action: none; }
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.98rem;
-  line-height: 1.3;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
   color: var(--ink);
 }
 .awards p, .timeline p { margin: 0; font-size: 0.82rem; line-height: 1.55; }

@@ -6,7 +6,7 @@
  * Useful for pasting into a host that only takes a single file, emailing a
  * working copy, or opening straight off disk with no server. Everything ships
  * inline — three.js, React, the shaders, the stylesheet — so the only network
- * request the page makes is for the two Google fonts.
+ * request the page makes is for the DM Sans webfont.
  *
  * One caveat: the resume link stays relative. If you use the single file, put
  * resume.pdf next to it or point identity.resumeHref at an absolute URL.
@@ -51,7 +51,7 @@ const html = `<!doctype html>
 <title>Portfolio Archipelago</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 ${css}
 </style>
