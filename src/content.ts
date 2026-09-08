@@ -64,14 +64,15 @@ export interface Island {
 /* -------------------------------------------------------------------------- */
 
 export const identity = {
-  name: 'Your Name', // PLACEHOLDER
-  title: 'Product Designer', // PLACEHOLDER
-  /** Shown on the intro title card, under your name. One line, no period. */
-  tagline: 'Six islands. Three case studies. One resume that leaves by plane', // PLACEHOLDER
+  name: 'Whitney Snyder',
+  /** The line under your name, in the corner mark and on the intro card. */
+  title: 'Product Designer',
+  /** The smaller line beneath that, on the intro card only. */
+  tagline: 'Just out here, building castles in the sky',
   email: 'hello@example.com', // PLACEHOLDER
   /** Drop your real PDF at public/resume.pdf and this just works. */
   resumeHref: 'resume.pdf',
-  resumeFilename: 'your-name-resume.pdf', // PLACEHOLDER
+  resumeFilename: 'whitney-snyder-resume.pdf',
   links: [
     { label: 'LinkedIn', href: 'https://linkedin.com/in/your-handle' }, // PLACEHOLDER
     { label: 'Read.cv', href: 'https://read.cv/your-handle' }, // PLACEHOLDER
