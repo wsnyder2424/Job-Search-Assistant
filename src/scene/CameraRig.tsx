@@ -104,15 +104,18 @@ export function CameraRig({ world }: { world: Archipelago }) {
   useEffect(() => {
     if (phase !== 'loading') return
     if (reduced) {
-      camera.position.copy(overview.position)
-      camera.zoom = overview.zoom
+      // Snap to wherever we should end up — including a deep-linked island —
+      // rather than animating there. `desired` is the overview when nothing
+      // is selected, so this covers both cases.
+      camera.position.copy(desired.position)
+      camera.zoom = desired.zoom
       camera.updateProjectionMatrix()
-      controls.current?.target.copy(overview.target)
+      controls.current?.target.copy(desired.target)
       setPhase('live')
       return
     }
     setPhase('intro')
-  }, [phase, reduced, camera, overview, setPhase])
+  }, [phase, reduced, camera, desired, setPhase])
 
   useEffect(() => {
     if (phase !== 'intro') return
@@ -159,7 +162,11 @@ export function CameraRig({ world }: { world: Archipelago }) {
 
       if (t >= 1) {
         setPhase('live')
-        setTransitioning(false)
+        // A deep link arrives with an island already selected but nothing to
+        // drive the camera there: `select()` queues the transition, and the
+        // hash never calls it. Without this the intro lands on the overview
+        // and the panel opens beside an island sitting off to one side.
+        setTransitioning(selected !== null)
       }
       return
     }

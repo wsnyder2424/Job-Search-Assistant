@@ -159,45 +159,46 @@ export const resume = {
 
 export const islands: Island[] = [
   {
-    id: 'harbor-scheduling',
+    id: 'syndio-permissions',
     kind: 'case-study',
-    name: 'Harbor District', // PLACEHOLDER
-    subtitle: 'Case study — scheduling at scale', // PLACEHOLDER
+    name: 'Gatehouse Quarter',
+    subtitle: 'Case study — access control',
     accent: '#e8814a',
     weight: 1.3,
     seed: 1207,
     study: {
-      // PLACEHOLDER — this entire block
+      headline: 'Designing scalable access control for 50K+ pay equity data categories at Syndio',
       summary:
-        'Rebuilt the scheduling core of an operations platform used by 40,000 shift workers, replacing a spreadsheet-shaped grid with a planning surface people could actually reason about.',
-      role: 'Lead product designer',
-      timeframe: '2023 — 2025',
-      team: 'With 1 researcher, 6 engineers, 1 PM',
+        "Led Syndio's first permissions system 0-to-1 across four engineering teams, translating hierarchical backend constraints into a group-based model after research showed role-based wouldn't scale.",
+      role: 'Product designer', // PLACEHOLDER — the "Product management" tag suggests this was broader; scope it the way you'd say it out loud
+      timeframe: '2023 — 2024', // PLACEHOLDER
+      team: 'Across four engineering teams',
       metrics: [
-        { value: '−62%', label: 'time to publish a schedule' },
-        { value: '+38%', label: 'shifts filled without escalation' },
-        { value: '40k', label: 'workers on the new surface' },
+        { value: '−65%', label: 'Less support tickets' },
+        { value: '+$300k', label: 'In contracts saved' },
       ],
+      // PLACEHOLDER — the card you sent carried the title, summary, tags and
+      // metrics but no narrative, so these are prompts rather than invented
+      // copy. The headings are a suggested shape, not a requirement.
       sections: [
         {
           heading: 'The problem',
-          body: 'Managers were building schedules in our product and then rebuilding them in Excel, because our grid could show a week but could not answer "who is about to hit overtime." The product had the data and hid it. Support tickets were a proxy for a missing view, not a missing feature.',
+          body: 'PLACEHOLDER — what was happening before Syndio had a permissions system at all? Who was being let into pay equity data they should not have seen, or locked out of data they needed, and how did that surface?',
         },
         {
-          heading: 'What I did',
-          body: 'I ran two weeks of shadowing across three sites before drawing anything, and mapped every decision a manager makes between an open shift and a published week. That map became the information architecture: constraints surface where the decision happens, not in a separate compliance tab.',
+          heading: 'Why role-based failed',
+          body: 'PLACEHOLDER — this is the sharpest thing on the card. What did the research actually show? Name the moment role-based broke against 50K+ categories, and what convinced four engineering teams to change course.',
         },
         {
-          heading: 'The hard part',
-          body: 'Every constraint we surfaced made the interface louder. We shipped three versions of the warning system before landing on one that ranks by consequence rather than by rule type — a change that came directly from watching a manager ignore eleven identical yellow banners in a row.',
+          heading: 'Translating the backend',
+          body: 'PLACEHOLDER — the backend constraints were hierarchical and the model you shipped was group-based. What was lost in that translation, and how did you keep the interface honest about a structure it was not mirroring?',
         },
         {
           heading: 'Outcome',
-          body: 'Schedules that took a full afternoon now take under 90 minutes, and the Excel workaround has effectively disappeared at the pilot sites. The constraint-ranking model has since been adopted by two other teams.',
+          body: 'PLACEHOLDER — how did this cut support tickets by 65% and save $300k in contracts? Which of the two mattered more internally, and what has held up since.',
         },
       ],
-      tags: ['Enterprise', 'Complex systems', 'Research-led', 'Design systems'],
-      link: { label: 'Read the long version', href: 'https://example.com' },
+      tags: ['Startup', 'B2B SaaS', 'Product management', '0 → 1'],
     },
   },
   {
