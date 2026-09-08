@@ -54,15 +54,20 @@ export function Panel() {
         data-open={!!island}
         tabIndex={-1}
         aria-hidden={!island}
-        aria-label={island ? `${island.name} — ${island.subtitle}` : undefined}
+        aria-label={island ? `${island.study?.headline ?? island.name} — ${island.subtitle}` : undefined}
         style={island ? ({ ['--accent' as string]: island.accent }) : undefined}
       >
         {island && (
           <>
             <header className="panel__head">
               <div>
-                <p className="panel__eyebrow">{island.subtitle}</p>
-                <h2 className="panel__title">{island.name}</h2>
+                {/* When a case study has a real title it takes the heading, and
+                    the island's place name moves into the eyebrow so the panel
+                    still reads as belonging to the island beside it. */}
+                <p className="panel__eyebrow">
+                  {island.study?.headline ? `${island.subtitle} · ${island.name}` : island.subtitle}
+                </p>
+                <h2 className="panel__title">{island.study?.headline ?? island.name}</h2>
               </div>
               <button type="button" className="panel__close" onClick={close} aria-label="Close and return to the archipelago">
                 <span aria-hidden="true">✕</span>

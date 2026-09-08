@@ -18,6 +18,12 @@ export interface Metric {
 }
 
 export interface CaseStudyBody {
+  /**
+   * The case study's real title, shown as the panel heading. Without one the
+   * panel falls back to the island's place name — fine for a placeholder,
+   * but the actual title of the work should outrank the map label.
+   */
+  headline?: string
   /** One line under the title in the panel. The elevator pitch. */
   summary: string
   /** Your role, honestly scoped. */
@@ -232,40 +238,46 @@ export const islands: Island[] = [
     },
   },
   {
-    id: 'ledger-design-system',
+    id: 'attorney-analytics',
     kind: 'case-study',
-    name: 'Foundry Point', // PLACEHOLDER
-    subtitle: 'Case study — design systems', // PLACEHOLDER
+    name: 'Docket Point',
+    subtitle: 'Case study — AI/ML',
     accent: '#7d6ae0',
     weight: 1.05,
     seed: 3391,
     study: {
-      // PLACEHOLDER — this entire block
+      headline: 'Driving Analytics Revenue with AI-Powered Attorney Insights',
       summary:
-        'Rebuilt a 200-component library that three product teams had quietly stopped using, and got adoption back above 90% by treating the system as a product with users rather than a rulebook with violators.',
-      role: 'Design systems lead',
-      timeframe: '2020 — 2021',
-      team: 'With 2 designers, 3 engineers',
+        "Designed Attorney Analytics' argument clusters with data scientists, shifting model output from abstract concepts to the hierarchical topics 80% of attorneys preferred.",
+      role: 'Product designer', // PLACEHOLDER — scope this the way you'd say it out loud
+      timeframe: '2024 — 2025', // PLACEHOLDER
+      team: 'With data scientists',
       metrics: [
-        { value: '92%', label: 'component adoption' },
-        { value: '200→74', label: 'components after audit' },
-        { value: 'AA', label: 'WCAG across the library' },
+        { value: '#1', label: 'Selling product' },
+        { value: '+1M', label: 'Attorneys tracked' },
       ],
+      // PLACEHOLDER — the card you sent carried the title, summary, tags and
+      // metrics but no narrative, so these are prompts rather than invented
+      // copy. The headings are a suggested shape, not a requirement.
       sections: [
         {
           heading: 'The problem',
-          body: 'The library was technically complete and socially dead. Teams forked components rather than request changes, because requesting a change took six weeks and forking took an afternoon.',
+          body: 'PLACEHOLDER — what were attorneys doing before argument clusters existed, and what did the abstract-concept output cost them? Name the moment you saw it go wrong.',
         },
         {
           heading: 'What I did',
-          body: 'I audited every fork in the codebase and treated each one as a bug report about the system. Two thirds of them pointed at four missing capabilities. We shipped those, deleted 126 components nobody used, and published a contribution path with a two-day SLA.',
+          body: 'PLACEHOLDER — how did you work with the data scientists? What did designing a model output actually involve day to day, and what did you have to learn to do it?',
+        },
+        {
+          heading: 'The hard part',
+          body: "PLACEHOLDER — the 80% preference figure implies you tested alternatives. What did you try that attorneys rejected, and what did that teach you about how they think?",
         },
         {
           heading: 'Outcome',
-          body: 'Adoption recovered within two quarters and stayed. The accessibility pass that came with the rewrite took the whole library to WCAG AA, which had previously been tracked as 14 separate team-level tickets that never moved.',
+          body: 'PLACEHOLDER — how did this become the #1 selling product? What changed for the business, and what has held up since.',
         },
       ],
-      tags: ['Design systems', 'Accessibility', 'Governance'],
+      tags: ['AI/ML', 'B2B SaaS', 'UX research', 'Enterprise'],
     },
   },
   {
