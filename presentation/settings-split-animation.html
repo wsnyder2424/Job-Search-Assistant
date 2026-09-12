@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — one page becomes two</title>
+<style>
+  :root{
+    --slide-bg-1:#F7F9FC;
+    --slide-bg-2:#E2E7EE;
+    --card:#FFFFFF;
+    --card-border:#E4E8EE;
+    --bar-header:#AEB7C4;
+    --bar-label:#CCD3DD;
+    --bar-sub:#E0E5EC;
+    --track:#E0E5EB;
+    --track-on:#BCC4CF;
+    --value:#D5DBE4;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    overflow:hidden;
+    background:radial-gradient(120% 110% at 50% -10%, var(--slide-bg-1) 0%, var(--slide-bg-2) 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+
+  /* 16:9 logical stage, scaled to fit whatever it is projected on */
+  #stage{
+    position:absolute;
+    width:1600px;
+    height:900px;
+    transform-origin:top left;
+  }
+
+  .card{
+    position:absolute;
+    top:0; left:0;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 44px -14px rgba(16,24,40,.16);
+    z-index:1;
+  }
+
+  .item{
+    position:absolute;
+    top:0; left:0;
+    z-index:5;
+    border-radius:10px;
+  }
+  .item.header{ height:12px; }
+  .item.row{ height:36px; display:flex; flex-direction:column; justify-content:center; }
+
+  /* skeleton bars, with a slow loading shimmer */
+  .bar, .value{
+    background-image:linear-gradient(100deg,
+      rgba(255,255,255,0) 38%,
+      rgba(255,255,255,.34) 50%,
+      rgba(255,255,255,0) 62%);
+    background-size:260% 100%;
+    background-repeat:no-repeat;
+    animation:shimmer 2.8s linear infinite;
+  }
+  .bar{ border-radius:7px; background-color:var(--bar-label); }
+  .bar.label{ height:14px; }
+  .bar.sub{ height:10px; margin-top:8px; background-color:var(--bar-sub); border-radius:5px; }
+  .bar.head{ height:12px; background-color:var(--bar-header); border-radius:6px; }
+
+  @keyframes shimmer{
+    0%   { background-position:150% 0; }
+    100% { background-position:-150% 0; }
+  }
+
+  .ctrl{ position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .toggle{ width:46px; height:26px; border-radius:13px; background:var(--track); }
+  .toggle.on{ background:var(--track-on); }
+  .knob{
+    position:absolute; top:3px; left:3px;
+    width:20px; height:20px; border-radius:50%;
+    background:#fff;
+    box-shadow:0 1px 2px rgba(16,24,40,.22);
+  }
+  .toggle.on .knob{ left:23px; }
+  .value{ width:80px; height:12px; border-radius:6px; background-color:var(--value); }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ------------------------------------------------------------------ *
+   * All geometry is computed in a 1600 x 900 logical slide, then the
+   * whole stage is scaled to fit the window. Every item is absolutely
+   * positioned, so a "layout" is just a map of id -> {x, y, w} and the
+   * animation is a tween between two of those maps.
+   * ------------------------------------------------------------------ */
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  const PAD         = 36;  // card padding
+  const HEADER_H    = 12;
+  const HEADER_GAP  = 24;  // space under a section header
+  const ROW_H       = 36;
+  const ROW_GAP     = 18;  // space under a row
+  const SECTION_GAP = 34;  // extra space above a non-first header
+
+  // Three staged card geometries.
+  const A   = { x:440, w:720, y:83,  h:734 };  // one wide page
+  const M1  = { x:152, w:620, y:83,  h:734 };  // narrowed, still full height
+  const M2  = { x:828, w:620, y:83,  h:734 };  // the new page, empty
+  const B1  = { x:152, w:620, y:220, h:460 };  // settled page 1
+  const B2  = { x:828, w:620, y:220, h:460 };  // settled page 2
+
+  /* ---------------- content model ----------------------------------- */
+  // w / sub are fractions of the card's content width, so every bar
+  // rescales on its own when the card narrows.
+
+  const ITEMS = [
+    // Section 1 — stays on page 1
+    { id:'h1', kind:'header', w:.24,                                page:1 },
+    { id:'r1', kind:'row', w:.46, sub:.30, ctrl:'toggle', on:true,  page:1 },
+    { id:'r2', kind:'row', w:.54, sub:0,   ctrl:'toggle', on:false, page:1 },
+    { id:'r3', kind:'row', w:.40, sub:.28, ctrl:'value',            page:1 },
+    // Section 2 — splits across both pages
+    { id:'h2', kind:'header', w:.28,                                page:1 },
+    { id:'r4', kind:'row', w:.50, sub:0,   ctrl:'toggle', on:true,  page:1 },
+    { id:'r5', kind:'row', w:.44, sub:.32, ctrl:'value',            page:2 },
+    { id:'r6', kind:'row', w:.58, sub:0,   ctrl:'toggle', on:false, page:2 },
+    // Section 3 — moves to page 2 wholesale
+    { id:'h3', kind:'header', w:.22,                                page:2 },
+    { id:'r7', kind:'row', w:.48, sub:.30, ctrl:'toggle', on:true,  page:2 },
+    { id:'r8', kind:'row', w:.52, sub:0,   ctrl:'value',            page:2 },
+    { id:'r9', kind:'row', w:.38, sub:.26, ctrl:'toggle', on:false, page:2 },
+  ];
+
+  // Page 2 gets a section header of its own, which fades in with the card.
+  const NEW_HEADER = { id:'h0', kind:'header', w:.26, page:2, isNew:true };
+
+  const ORDER_ALL  = ITEMS;                                   // page 1, before
+  const ORDER_P1   = ITEMS.filter(i => i.page === 1);         // page 1, after
+  const ORDER_P2   = [NEW_HEADER].concat(ITEMS.filter(i => i.page === 2));
+
+  const STAYERS = ORDER_P1;
+  const MOVERS  = ITEMS.filter(i => i.page === 2);
+
+  /* ---------------- layout ------------------------------------------ */
+
+  function layout(list, card){
+    const contentX = card.x + PAD;
+    const contentW = card.w - PAD * 2;
+    let y = card.y + PAD;
+    const out = {};
+    list.forEach((it, i) => {
+      if (it.kind === 'header' && i > 0) y += SECTION_GAP;
+      out[it.id] = { x:contentX, y:y, w:contentW };
+      y += (it.kind === 'header') ? HEADER_H + HEADER_GAP : ROW_H + ROW_GAP;
+    });
+    return out;
+  }
+
+  // POS_A     everything stacked in one wide page
+  // POS_STACK the same stack, narrowed and shifted left (page 1 of two)
+  // POS_LAND  where page-2 items sit once they have crossed the gap
+  // POS_B     the settled two-page layout
+  const POS_A     = layout(ORDER_ALL, A);
+  const POS_STACK = layout(ORDER_ALL, M1);
+  const POS_LAND  = layout(ORDER_P2,  M2);
+  const POS_B     = Object.assign(layout(ORDER_P1, B1), layout(ORDER_P2, B2));
+
+  /* ---------------- build the DOM ----------------------------------- */
+
+  const stage = document.getElementById('stage');
+
+  function makeCard(){
+    const el = document.createElement('div');
+    el.className = 'card';
+    stage.appendChild(el);
+    return el;
+  }
+
+  function makeItem(it){
+    const el = document.createElement('div');
+    el.className = 'item ' + it.kind;
+
+    if (it.kind === 'header'){
+      const bar = document.createElement('div');
+      bar.className = 'bar head';
+      bar.style.width = (it.w * 100) + '%';
+      el.appendChild(bar);
+    } else {
+      const label = document.createElement('div');
+      label.className = 'bar label';
+      label.style.width = (it.w * 100) + '%';
+      el.appendChild(label);
+
+      if (it.sub){
+        const sub = document.createElement('div');
+        sub.className = 'bar sub';
+        sub.style.width = (it.sub * 100) + '%';
+        el.appendChild(sub);
+      }
+
+      const ctrl = document.createElement('div');
+      ctrl.className = 'ctrl';
+      if (it.ctrl === 'toggle'){
+        const t = document.createElement('div');
+        t.className = 'toggle' + (it.on ? ' on' : '');
+        const k = document.createElement('div');
+        k.className = 'knob';
+        t.appendChild(k);
+        ctrl.appendChild(t);
+      } else {
+        const v = document.createElement('div');
+        v.className = 'value';
+        ctrl.appendChild(v);
+      }
+      el.appendChild(ctrl);
+    }
+
+    // de-sync the shimmer so the bars don't pulse in lockstep
+    const offset = (-Math.random() * 2.8).toFixed(2) + 's';
+    el.querySelectorAll('.bar, .value').forEach(b => { b.style.animationDelay = offset; });
+
+    stage.appendChild(el);
+    return el;
+  }
+
+  const card1 = makeCard();
+  const card2 = makeCard();
+  const els = {};
+  ORDER_ALL.forEach(it => { els[it.id] = makeItem(it); });
+  els[NEW_HEADER.id] = makeItem(NEW_HEADER);
+
+  /* ---------------- timeline ----------------------------------------- *
+   * beat 1  the page narrows and slides left; an empty second page appears
+   * beat 2  the migrating settings lift, arc across the gap, and land
+   * beat 3  both pages settle: page 1 closes its gaps, both cards shrink
+   * -------------------------------------------------------------------- */
+
+  const HOLD          = 800;                 // beat on the single page first
+  const NARROW_DUR    = 580;
+  const CARD2_DELAY   = HOLD + 180;
+  const CARD2_DUR     = 520;
+  const NEWHEAD_DELAY = HOLD + 420;
+
+  const MOVE_DELAY    = HOLD + 640;
+  const MOVE_STAG     = 70;
+  const MOVE_DUR      = 660;
+  const LIFT          = 44;                  // arc height for a migrating row
+
+  const LAST_LANDING  = MOVE_DELAY + (MOVERS.length - 1) * MOVE_STAG + MOVE_DUR;
+  const SETTLE_DELAY  = LAST_LANDING + 120;
+  const SETTLE_DUR    = 600;
+
+  const EASE_CARD   = 'cubic-bezier(.76,0,.24,1)';
+  const EASE_MOVE   = 'cubic-bezier(.62,.03,.28,1)';
+  const EASE_SETTLE = 'cubic-bezier(.33,1,.68,1)';
+
+  const anims = [];
+
+  const cardFrame = c => ({
+    transform:`translate(${c.x}px, ${c.y}px)`, width:c.w + 'px', height:c.h + 'px'
+  });
+  const itemFrame = p => ({
+    transform:`translate(${p.x}px, ${p.y}px)`, width:p.w + 'px'
+  });
+
+  // Forward fill only: each beat holds its end state, and leaves the state
+  // before it starts to the beat before it (or to the inline reset styles).
+  function animate(el, frames, opts){
+    const a = el.animate(frames, Object.assign({ fill:'forwards' }, opts));
+    anims.push(a);
+    return a;
+  }
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+
+    Object.assign(card1.style, cardFrame(A),  { opacity:1 });
+    Object.assign(card2.style, cardFrame(M2), { opacity:0 });
+
+    ORDER_ALL.forEach(it => {
+      Object.assign(els[it.id].style, itemFrame(POS_A[it.id]), { opacity:1, boxShadow:'none' });
+    });
+    Object.assign(els[NEW_HEADER.id].style, itemFrame(POS_LAND[NEW_HEADER.id]), { opacity:0 });
+  }
+
+  function play(){
+    reset();
+
+    /* beat 1 — the single page narrows and settles to the left */
+    animate(card1, [cardFrame(A), cardFrame(M1)],
+      { duration:NARROW_DUR, delay:HOLD, easing:EASE_CARD });
+
+    ORDER_ALL.forEach(it => {
+      animate(els[it.id], [itemFrame(POS_A[it.id]), itemFrame(POS_STACK[it.id])],
+        { duration:NARROW_DUR, delay:HOLD, easing:EASE_CARD });
+    });
+
+    /* beat 1 — a second, empty page materialises beside it */
+    animate(card2, [
+      { opacity:0, transform:`translate(${M2.x + 26}px, ${M2.y}px)`,
+        width:M2.w + 'px', height:M2.h + 'px' },
+      { opacity:1, transform:`translate(${M2.x}px, ${M2.y}px)`,
+        width:M2.w + 'px', height:M2.h + 'px' }
+    ], { duration:CARD2_DUR, delay:CARD2_DELAY, easing:EASE_CARD });
+
+    animate(els[NEW_HEADER.id], [{ opacity:0 }, { opacity:1 }],
+      { duration:420, delay:NEWHEAD_DELAY, easing:'ease-out' });
+
+    /* beat 2 — the migrating settings arc across the gap */
+    MOVERS.forEach((it, i) => {
+      const a = POS_STACK[it.id], b = POS_LAND[it.id];
+      const mid = { x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 - LIFT, w:(a.w + b.w) / 2 };
+      animate(els[it.id], [
+        { transform:`translate(${a.x}px, ${a.y}px) scale(1)`, width:a.w + 'px',
+          boxShadow:'0 0 0 rgba(16,24,40,0)', offset:0 },
+        { transform:`translate(${mid.x}px, ${mid.y}px) scale(1.03)`, width:mid.w + 'px',
+          boxShadow:'0 18px 34px -14px rgba(16,24,40,.30)', offset:.5 },
+        { transform:`translate(${b.x}px, ${b.y}px) scale(1)`, width:b.w + 'px',
+          boxShadow:'0 0 0 rgba(16,24,40,0)', offset:1 }
+      ], { duration:MOVE_DUR, delay:MOVE_DELAY + i * MOVE_STAG, easing:EASE_MOVE });
+    });
+
+    /* beat 3 — both pages settle to their final height and position */
+    animate(card1, [cardFrame(M1), cardFrame(B1)],
+      { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
+    animate(card2, [cardFrame(M2), cardFrame(B2)],
+      { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
+
+    ORDER_P1.concat(ORDER_P2).forEach(it => {
+      const from = (it.page === 2) ? POS_LAND[it.id] : POS_STACK[it.id];
+      animate(els[it.id], [itemFrame(from), itemFrame(POS_B[it.id])],
+        { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
+    });
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  function fit(){
+    const s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${s})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * s) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * s) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // Click anywhere, or press space / R, to replay.
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
