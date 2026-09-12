@@ -291,8 +291,20 @@
     Object.assign(els[NEW_HEADER.id].style, itemFrame(POS_LAND[NEW_HEADER.id]), { opacity:0 });
   }
 
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Viewers who ask for reduced motion get the end state, not the journey.
+  function snapToEnd(){
+    Object.assign(card1.style, cardFrame(B1), { opacity:1 });
+    Object.assign(card2.style, cardFrame(B2), { opacity:1 });
+    ORDER_P1.concat(ORDER_P2).forEach(it => {
+      Object.assign(els[it.id].style, itemFrame(POS_B[it.id]), { opacity:1, boxShadow:'none' });
+    });
+  }
+
   function play(){
     reset();
+    if (REDUCED.matches){ snapToEnd(); return; }
 
     /* beat 1 — the single page narrows and settles to the left */
     animate(card1, [cardFrame(A), cardFrame(M1)],
