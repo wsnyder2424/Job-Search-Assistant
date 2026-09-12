@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Long Settings Screen</title>
+<style>
+  :root{
+    --slide-bg-1:#F7F9FC;
+    --slide-bg-2:#E2E7EE;
+    --card:#FFFFFF;
+    --card-border:#E4E8EE;
+    --bar-header:#AEB7C4;
+    --bar-label:#CCD3DD;
+    --bar-sub:#E0E5EC;
+    --bar-quiet:#DCE2EA;
+    --track:#E0E5EB;
+    --track-on:#BCC4CF;
+    --value:#D5DBE4;
+    --chrome-bg:#F7F9FB;
+    --chrome-line:#DDE2E9;
+    --fill:#C4CCD6;
+    --scroll-track:#EDF0F4;
+    --scroll-thumb:#C2CAD5;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    overflow:hidden;
+    background:radial-gradient(120% 110% at 50% -10%, var(--slide-bg-1) 0%, var(--slide-bg-2) 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+
+  /* 16:9 logical stage, scaled to fit whatever it is projected on */
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  .card{
+    position:absolute;
+    left:450px; top:70px;
+    width:700px; height:760px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 44px -14px rgba(16,24,40,.16);
+    overflow:hidden;
+  }
+
+  .scroller{
+    position:absolute;
+    left:0; top:0; right:0;
+    padding:40px;
+    box-sizing:border-box;
+    display:flex; flex-direction:column;
+    will-change:transform;
+  }
+
+  /* ---- scrollbar ---- */
+  .sbar{
+    position:absolute; right:10px; top:12px; bottom:12px;
+    width:6px; border-radius:3px;
+    background:var(--scroll-track);
+    opacity:0;
+  }
+  .thumb{
+    position:absolute; left:0; top:0; width:6px;
+    border-radius:3px;
+    background:var(--scroll-thumb);
+  }
+
+  /* ---- structure ---- */
+  .section{ display:flex; flex-direction:column; }
+  .section + .section{ margin-top:34px; }
+  .row{ display:flex; align-items:center; gap:20px; }
+  .row.indent{ margin-left:30px; }
+  .labels{ flex:1 1 auto; min-width:0; }
+  .ctrls{ flex:0 0 auto; display:flex; align-items:center; gap:10px; }
+
+  /* ---- skeleton bars ---- */
+  .bar{
+    border-radius:7px;
+    background-color:var(--bar-label);
+    background-image:linear-gradient(100deg,
+      rgba(255,255,255,0) 38%, rgba(255,255,255,.3) 50%, rgba(255,255,255,0) 62%);
+    background-size:260% 100%;
+    background-repeat:no-repeat;
+    animation:shimmer 3.6s linear infinite;
+  }
+  .bar.head{ height:12px; border-radius:6px; background-color:var(--bar-header); margin-bottom:20px; }
+  .bar.label{ height:14px; }
+  .bar.sub{ height:10px; border-radius:5px; margin-top:8px; background-color:var(--bar-sub); }
+  .row.indent .bar.label{ background-color:var(--bar-quiet); }
+
+  @keyframes shimmer{
+    0%   { background-position:150% 0; }
+    100% { background-position:-150% 0; }
+  }
+
+  /* ---- controls, roughly in order of how fiddly they look ---- */
+  .toggle{ width:46px; height:26px; border-radius:13px; background:var(--track); position:relative; }
+  .toggle.on{ background:var(--track-on); }
+  .knob{
+    position:absolute; top:3px; left:3px; width:20px; height:20px;
+    border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.22);
+  }
+  .toggle.on .knob{ left:23px; }
+
+  .value{ width:78px; height:12px; border-radius:6px; background:var(--value); }
+
+  .select, .field, .stepper{
+    height:30px; box-sizing:border-box;
+    border:1px solid var(--chrome-line); border-radius:8px;
+    background:var(--chrome-bg);
+    display:flex; align-items:center; gap:8px;
+    padding:0 10px;
+  }
+  .select{ width:132px; justify-content:space-between; }
+  .field{ width:186px; background:#fff; }
+  .caret{
+    width:7px; height:7px; flex:0 0 auto;
+    border-right:2px solid var(--bar-header);
+    border-bottom:2px solid var(--bar-header);
+    transform:translateY(-2px) rotate(45deg);
+  }
+  .select .pill{ height:10px; border-radius:5px; background:var(--value); width:58px; }
+  .field .pill{ height:10px; border-radius:5px; background:var(--value); width:96px; }
+
+  .stepper{ width:76px; justify-content:space-between; padding:0; }
+  .stepper .half{ flex:1; display:flex; align-items:center; justify-content:center; height:100%; }
+  .stepper .half + .half{ border-left:1px solid var(--chrome-line); }
+  .stepper .glyph{ width:10px; height:2px; border-radius:1px; background:var(--bar-header); }
+
+  .slider{ width:150px; height:16px; position:relative; display:flex; align-items:center; }
+  .slider .rail{ position:absolute; left:0; right:0; height:4px; border-radius:2px; background:var(--track); }
+  .slider .fill{ position:absolute; left:0; height:4px; border-radius:2px; background:var(--fill); }
+  .slider .grip{
+    position:absolute; width:16px; height:16px; border-radius:50%;
+    background:#fff; border:1px solid var(--chrome-line);
+    box-shadow:0 1px 2px rgba(16,24,40,.2);
+  }
+
+  .segmented{
+    display:flex; gap:2px; padding:3px; border-radius:9px;
+    background:#F1F4F7; border:1px solid var(--chrome-line);
+  }
+  .segmented .seg{
+    width:40px; height:24px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .segmented .seg.sel{ background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.14); }
+  .segmented .seg i{ display:block; width:20px; height:8px; border-radius:4px; background:var(--value); }
+  .segmented .seg.sel i{ background:var(--bar-header); }
+
+  .chips{ display:flex; gap:6px; }
+  .chips span{ height:22px; border-radius:11px; background:#EDF0F4; border:1px solid var(--chrome-line); }
+
+  .swatches{ display:flex; gap:6px; }
+  .swatches span{ width:20px; height:20px; border-radius:6px; border:1px solid var(--chrome-line); }
+
+  .checks{ display:flex; gap:8px; }
+  .checks span{
+    width:18px; height:18px; border-radius:5px;
+    border:1px solid var(--chrome-line); background:#fff;
+  }
+  .checks span.on{ background:var(--fill); border-color:var(--fill); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="card">
+    <div class="scroller" id="scroller"></div>
+    <div class="sbar" id="sbar"><div class="thumb" id="thumb"></div></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  /* ------------------------------------------------------------------ *
+   * The screen gets busier as it goes: simple toggles at the top, then
+   * dropdowns and fields, then rows carrying two controls at once, with
+   * the row spacing tightening section by section. `gap` is the space
+   * between rows; `w` values are fractions of whatever width the label
+   * column is left with once the controls have taken theirs.
+   * ------------------------------------------------------------------ */
+
+  const SECTIONS = [
+    { head:.22, gap:20, rows:[
+      { w:.44, sub:.28, ctrls:['toggle-on'] },
+      { w:.62, ctrls:['toggle'] },
+      { w:.38, sub:.24, ctrls:['toggle-on'] },
+    ]},
+    { head:.26, gap:18, rows:[
+      { w:.54, sub:.30, ctrls:['value'] },
+      { w:.42, ctrls:['toggle'] },
+      { w:.60, sub:.26, ctrls:['select'] },
+      { w:.46, ctrls:['toggle-on'] },
+    ]},
+    { head:.30, gap:16, rows:[
+      { w:.56, sub:.32, ctrls:['select'] },
+      { w:.40, ctrls:['field'] },
+      { w:.50, sub:.22, ctrls:['slider'] },
+      { w:.66, ctrls:['toggle'] },
+      { w:.48, sub:.28, ctrls:['segmented'] },
+    ]},
+    { head:.24, gap:13, rows:[
+      { w:.38, ctrls:['stepper','toggle-on'] },
+      { w:.52, sub:.26, ctrls:['select'] },
+      { w:.34, ctrls:['slider'] },
+      { w:.58, ctrls:['field'] },
+      { w:.42, indent:true, ctrls:['toggle'] },
+      { w:.46, indent:true, ctrls:['value'] },
+    ]},
+    { head:.28, gap:10, rows:[
+      { w:.36, ctrls:['chips'] },
+      { w:.44, ctrls:['select','stepper'] },
+      { w:.30, ctrls:['swatches'] },
+      { w:.50, indent:true, ctrls:['slider','value'] },
+      { w:.40, indent:true, ctrls:['segmented'] },
+      { w:.54, ctrls:['field','toggle'] },
+      { w:.32, ctrls:['checks'] },
+    ]},
+    { head:.20, gap:10, rows:[
+      { w:.48, ctrls:['select','select'] },
+      { w:.30, ctrls:['toggle'] },
+      { w:.58, ctrls:['field'] },
+      { w:.38, indent:true, ctrls:['slider'] },
+      { w:.52, indent:true, ctrls:['segmented','toggle-on'] },
+      { w:.28, ctrls:['stepper'] },
+      { w:.46, ctrls:['chips'] },
+      { w:.42, ctrls:['value'] },
+    ]},
+    { head:.32, gap:9, rows:[
+      { w:.44, sub:.26, ctrls:['field','stepper'] },
+      { w:.36, ctrls:['swatches'] },
+      { w:.56, ctrls:['select'] },
+      { w:.40, indent:true, ctrls:['checks'] },
+      { w:.48, indent:true, ctrls:['slider'] },
+      { w:.30, ctrls:['toggle-on'] },
+      { w:.52, ctrls:['segmented','value'] },
+    ]},
+    { head:.18, gap:8, rows:[
+      { w:.50, ctrls:['select','toggle'] },
+      { w:.34, ctrls:['chips'] },
+      { w:.46, indent:true, ctrls:['field'] },
+      { w:.28, indent:true, ctrls:['stepper','toggle-on'] },
+      { w:.54, ctrls:['slider','value'] },
+      { w:.38, ctrls:['checks'] },
+      { w:.44, indent:true, ctrls:['select'] },
+      { w:.32, ctrls:['swatches'] },
+    ]},
+    { head:.26, gap:8, rows:[
+      { w:.42, ctrls:['segmented'] },
+      { w:.56, ctrls:['field','stepper'] },
+      { w:.30, indent:true, ctrls:['toggle'] },
+      { w:.48, indent:true, ctrls:['slider','toggle-on'] },
+      { w:.36, ctrls:['select','checks'] },
+      { w:.50, ctrls:['chips'] },
+      { w:.34, indent:true, ctrls:['value'] },
+      { w:.46, ctrls:['select','stepper'] },
+    ]},
+  ];
+
+  /* ---------------- control factory --------------------------------- */
+
+  const el = (cls, html) => {
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    if (html) d.innerHTML = html;
+    return d;
+  };
+
+  const CONTROLS = {
+    'toggle':    () => el('toggle', '<div class="knob"></div>'),
+    'toggle-on': () => el('toggle on', '<div class="knob"></div>'),
+    'value':     () => el('value'),
+    'select':    () => el('select', '<div class="pill"></div><div class="caret"></div>'),
+    'field':     () => el('field', '<div class="pill"></div>'),
+    'stepper':   () => el('stepper',
+                    '<div class="half"><div class="glyph"></div></div>' +
+                    '<div class="half"><div class="glyph"></div></div>'),
+    'slider':    () => {
+      const s = el('slider',
+        '<div class="rail"></div><div class="fill"></div><div class="grip"></div>');
+      const at = 0.34 + Math.random() * 0.42;           // a plausible resting value
+      s.querySelector('.fill').style.width = (at * 100) + '%';
+      s.querySelector('.grip').style.left  = `calc(${at * 100}% - 8px)`;
+      return s;
+    },
+    'segmented': () => {
+      const g = el('segmented');
+      const sel = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < 3; i++) g.appendChild(el('seg' + (i === sel ? ' sel' : ''), '<i></i>'));
+      return g;
+    },
+    'chips':     () => {
+      const c = el('chips');
+      [44, 62, 36].forEach(w => {
+        const s = document.createElement('span');
+        s.style.width = w + 'px';
+        c.appendChild(s);
+      });
+      return c;
+    },
+    'swatches':  () => {
+      const c = el('swatches');
+      ['#D9DFE7','#C4CCD6','#E5E9EF','#B4BDC9'].forEach(bg => {
+        const s = document.createElement('span');
+        s.style.background = bg;
+        c.appendChild(s);
+      });
+      return c;
+    },
+    'checks':    () => {
+      const c = el('checks');
+      [true, false, true].forEach(on => {
+        const s = document.createElement('span');
+        if (on) s.className = 'on';
+        c.appendChild(s);
+      });
+      return c;
+    },
+  };
+
+  /* ---------------- build the screen -------------------------------- */
+
+  const scroller = document.getElementById('scroller');
+
+  SECTIONS.forEach(sec => {
+    const section = el('section');
+    const head = el('bar head');
+    head.style.width = (sec.head * 100) + '%';
+    section.appendChild(head);
+
+    sec.rows.forEach((r, i) => {
+      const row = el('row' + (r.indent ? ' indent' : ''));
+      if (i > 0) row.style.marginTop = sec.gap + 'px';
+
+      const labels = el('labels');
+      const label = el('bar label');
+      label.style.width = (r.w * 100) + '%';
+      labels.appendChild(label);
+      if (r.sub){
+        const sub = el('bar sub');
+        sub.style.width = (r.sub * 100) + '%';
+        labels.appendChild(sub);
+      }
+      row.appendChild(labels);
+
+      const ctrls = el('ctrls');
+      r.ctrls.forEach(name => ctrls.appendChild(CONTROLS[name]()));
+      row.appendChild(ctrls);
+
+      section.appendChild(row);
+    });
+
+    scroller.appendChild(section);
+  });
+
+  // de-sync the shimmer so the bars don't pulse in lockstep
+  scroller.querySelectorAll('.bar').forEach(b => {
+    b.style.animationDelay = (-Math.random() * 3.6).toFixed(2) + 's';
+  });
+
+  /* ---------------- scroll geometry, measured from the real layout --- */
+
+  const card  = document.querySelector('.card');
+  const sbar  = document.getElementById('sbar');
+  const thumb = document.getElementById('thumb');
+
+  let MAX = 0, THUMB_TRAVEL = 0;
+
+  function measure(){
+    const viewport = card.clientHeight;
+    const content  = scroller.scrollHeight;
+    MAX = Math.max(0, content - viewport);
+
+    const trackH = sbar.clientHeight;
+    const thumbH = Math.max(48, Math.round(trackH * viewport / content));
+    thumb.style.height = thumbH + 'px';
+    THUMB_TRAVEL = trackH - thumbH;
+  }
+
+  /* ---------------- timeline ----------------------------------------- *
+   * Four flicks rather than one glide: each accelerates away and coasts
+   * to a stop, with a beat in between, the way someone actually skims a
+   * long page. The last one overshoots a little and rubber-bands back.
+   * -------------------------------------------------------------------- */
+
+  const HOLD  = 700;
+  const FLICK = 'cubic-bezier(.17,.84,.44,1)';
+
+  // fraction of the way down, how long the flick takes, and the pause after
+  const FLICKS = [
+    { to:.24, dur:560, pause:280 },
+    { to:.45, dur:520, pause:240 },
+    { to:.66, dur:580, pause:300 },
+    { to:.85, dur:540, pause:260 },
+    { to:1,   dur:640, pause:0   },
+  ];
+
+  const BOUNCE = 22;   // overscroll at the bottom, in px
+
+  const anims = [];
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function animate(node, frames, opts){
+    const a = node.animate(frames, Object.assign({ fill:'forwards' }, opts));
+    anims.push(a);
+    return a;
+  }
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+    scroller.style.transform = 'translateY(0px)';
+    thumb.style.transform    = 'translateY(0px)';
+    sbar.style.opacity       = 0;
+  }
+
+  function play(){
+    measure();
+    reset();
+    if (REDUCED.matches) return;   // hold at the top of the list
+
+    animate(sbar, [{ opacity:0 }, { opacity:1 }],
+      { duration:220, delay:HOLD - 60, easing:'ease-out' });
+
+    let t = HOLD, from = 0;
+
+    FLICKS.forEach((f, i) => {
+      const to   = MAX * f.to;
+      const last = i === FLICKS.length - 1;
+
+      const frames = last
+        ? [ { transform:`translateY(${-from}px)`, easing:FLICK },
+            { transform:`translateY(${-(to + BOUNCE)}px)`, offset:.8, easing:'ease-out' },
+            { transform:`translateY(${-to}px)` } ]
+        : [ { transform:`translateY(${-from}px)` },
+            { transform:`translateY(${-to}px)` } ];
+
+      animate(scroller, frames, { duration:f.dur, delay:t, easing:last ? undefined : FLICK });
+
+      // the thumb tracks the scroll, but never overshoots its track
+      animate(thumb, [
+        { transform:`translateY(${THUMB_TRAVEL * (from / MAX)}px)` },
+        { transform:`translateY(${THUMB_TRAVEL * (to   / MAX)}px)` }
+      ], { duration:f.dur, delay:t, easing:FLICK });
+
+      t += f.dur + f.pause;
+      from = to;
+    });
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  function fit(){
+    const s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${s})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * s) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * s) / 2) + 'px';
+  }
+  const stage = document.getElementById('stage');
+  window.addEventListener('resize', fit);
+  fit();
+
+  // Click anywhere, or press space / R, to replay.
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  requestAnimationFrame(play);
+})();
+</script>
+</body>
+</html>
