@@ -102,51 +102,60 @@
 
   const STAGE_W = 1600, STAGE_H = 900;
 
-  const PAD         = 36;  // card padding
+  const PAD         = 34;  // card padding
   const HEADER_H    = 12;
-  const HEADER_GAP  = 24;  // space under a section header
+  const HEADER_GAP  = 22;  // space under a section header
   const ROW_H       = 36;
-  const ROW_GAP     = 18;  // space under a row
-  const SECTION_GAP = 34;  // extra space above a non-first header
+  const ROW_GAP     = 16;  // space under a row
+  const SECTION_GAP = 30;  // extra space above a non-first header
 
   // Three staged card geometries.
-  const A   = { x:440, w:720, y:83,  h:734 };  // one wide page
-  const M1  = { x:152, w:620, y:83,  h:734 };  // narrowed, still full height
-  const M2  = { x:828, w:620, y:83,  h:734 };  // the new page, empty
-  const B1  = { x:152, w:620, y:220, h:460 };  // settled page 1
-  const B2  = { x:828, w:620, y:220, h:460 };  // settled page 2
+  const A  = { x:440, w:720, y:75,  h:750 };  // one wide page
+  const M1 = { x:152, w:620, y:75,  h:750 };  // narrowed, still full height
+  const M2 = { x:828, w:620, y:75,  h:750 };  // the new page, empty
+  const B1 = { x:152, w:620, y:205, h:490 };  // settled page 1
+  const B2 = { x:828, w:620, y:205, h:490 };  // settled page 2
 
-  /* ---------------- content model ----------------------------------- */
-  // w / sub are fractions of the card's content width, so every bar
-  // rescales on its own when the card narrows.
+  /* ---------------- content model ----------------------------------- *
+   * Both pages keep all three section headers; individual rows scatter
+   * between them. The split is hand-picked rather than a block cut, so
+   * page 1 is left with gaps in irregular places. Every section keeps at
+   * least one row on each page, and the two pages end up the same height.
+   * w / sub are fractions of the card's content width, so every bar
+   * rescales on its own when the card narrows.
+   * ------------------------------------------------------------------ */
 
-  const ITEMS = [
-    // Section 1 — stays on page 1
-    { id:'h1', kind:'header', w:.24,                                page:1 },
-    { id:'r1', kind:'row', w:.46, sub:.30, ctrl:'toggle', on:true,  page:1 },
-    { id:'r2', kind:'row', w:.54, sub:0,   ctrl:'toggle', on:false, page:1 },
-    { id:'r3', kind:'row', w:.40, sub:.28, ctrl:'value',            page:1 },
-    // Section 2 — splits across both pages
-    { id:'h2', kind:'header', w:.28,                                page:1 },
-    { id:'r4', kind:'row', w:.50, sub:0,   ctrl:'toggle', on:true,  page:1 },
-    { id:'r5', kind:'row', w:.44, sub:.32, ctrl:'value',            page:2 },
-    { id:'r6', kind:'row', w:.58, sub:0,   ctrl:'toggle', on:false, page:2 },
-    // Section 3 — moves to page 2 wholesale
-    { id:'h3', kind:'header', w:.22,                                page:2 },
-    { id:'r7', kind:'row', w:.48, sub:.30, ctrl:'toggle', on:true,  page:2 },
-    { id:'r8', kind:'row', w:.52, sub:0,   ctrl:'value',            page:2 },
-    { id:'r9', kind:'row', w:.38, sub:.26, ctrl:'toggle', on:false, page:2 },
+  const SECTIONS = [
+    { id:'s1', w:.24, rows:[
+      { id:'a1', w:.46, sub:.30, ctrl:'toggle', on:true,  page:1 },
+      { id:'a2', w:.54, sub:0,   ctrl:'toggle', on:false, page:2 },
+      { id:'a3', w:.40, sub:.28, ctrl:'value',            page:2 },
+      { id:'a4', w:.50, sub:0,   ctrl:'toggle', on:true,  page:1 },
+    ]},
+    { id:'s2', w:.28, rows:[
+      { id:'b1', w:.44, sub:.32, ctrl:'value',            page:2 },
+      { id:'b2', w:.58, sub:0,   ctrl:'toggle', on:false, page:1 },
+      { id:'b3', w:.48, sub:.30, ctrl:'toggle', on:true,  page:1 },
+    ]},
+    { id:'s3', w:.22, rows:[
+      { id:'c1', w:.52, sub:0,   ctrl:'value',            page:2 },
+      { id:'c2', w:.38, sub:.26, ctrl:'toggle', on:false, page:1 },
+      { id:'c3', w:.50, sub:.28, ctrl:'toggle', on:true,  page:2 },
+    ]},
   ];
 
-  // Page 2 gets a section header of its own, which fades in with the card.
-  const NEW_HEADER = { id:'h0', kind:'header', w:.26, page:2, isNew:true };
+  // A section header exists twice: the original on page 1, and a mirror on
+  // page 2 that fades in as that section's first row arrives.
+  const header  = (sec, mirror) => ({ id:mirror ? sec.id + 'b' : sec.id, kind:'header', w:sec.w });
+  const rowsOn  = (sec, page) => sec.rows.filter(r => r.page === page);
+  const flatten = (fn) => SECTIONS.reduce((acc, sec) => acc.concat(fn(sec)), []);
 
-  const ORDER_ALL  = ITEMS;                                   // page 1, before
-  const ORDER_P1   = ITEMS.filter(i => i.page === 1);         // page 1, after
-  const ORDER_P2   = [NEW_HEADER].concat(ITEMS.filter(i => i.page === 2));
+  const ORDER_A  = flatten(sec => [header(sec, false)].concat(sec.rows));
+  const ORDER_P1 = flatten(sec => [header(sec, false)].concat(rowsOn(sec, 1)));
+  const ORDER_P2 = flatten(sec => [header(sec, true)].concat(rowsOn(sec, 2)));
 
-  const STAYERS = ORDER_P1;
-  const MOVERS  = ITEMS.filter(i => i.page === 2);
+  const MOVERS   = flatten(sec => rowsOn(sec, 2));            // in reading order
+  const MIRRORS  = SECTIONS.map(sec => header(sec, true));
 
   /* ---------------- layout ------------------------------------------ */
 
@@ -156,9 +165,10 @@
     let y = card.y + PAD;
     const out = {};
     list.forEach((it, i) => {
-      if (it.kind === 'header' && i > 0) y += SECTION_GAP;
+      const isHeader = it.kind === 'header';
+      if (isHeader && i > 0) y += SECTION_GAP;
       out[it.id] = { x:contentX, y:y, w:contentW };
-      y += (it.kind === 'header') ? HEADER_H + HEADER_GAP : ROW_H + ROW_GAP;
+      y += isHeader ? HEADER_H + HEADER_GAP : ROW_H + ROW_GAP;
     });
     return out;
   }
@@ -167,9 +177,9 @@
   // POS_STACK the same stack, narrowed and shifted left (page 1 of two)
   // POS_LAND  where page-2 items sit once they have crossed the gap
   // POS_B     the settled two-page layout
-  const POS_A     = layout(ORDER_ALL, A);
-  const POS_STACK = layout(ORDER_ALL, M1);
-  const POS_LAND  = layout(ORDER_P2,  M2);
+  const POS_A     = layout(ORDER_A, A);
+  const POS_STACK = layout(ORDER_A, M1);
+  const POS_LAND  = layout(ORDER_P2, M2);
   const POS_B     = Object.assign(layout(ORDER_P1, B1), layout(ORDER_P2, B2));
 
   /* ---------------- build the DOM ----------------------------------- */
@@ -185,7 +195,7 @@
 
   function makeItem(it){
     const el = document.createElement('div');
-    el.className = 'item ' + it.kind;
+    el.className = 'item ' + (it.kind === 'header' ? 'header' : 'row');
 
     if (it.kind === 'header'){
       const bar = document.createElement('div');
@@ -233,12 +243,13 @@
   const card1 = makeCard();
   const card2 = makeCard();
   const els = {};
-  ORDER_ALL.forEach(it => { els[it.id] = makeItem(it); });
-  els[NEW_HEADER.id] = makeItem(NEW_HEADER);
+  ORDER_A.forEach(it => { els[it.id] = makeItem(it); });
+  MIRRORS.forEach(it => { els[it.id] = makeItem(it); });
 
   /* ---------------- timeline ----------------------------------------- *
    * beat 1  the page narrows and slides left; an empty second page appears
-   * beat 2  the migrating settings lift, arc across the gap, and land
+   * beat 2  the migrating settings lift, arc across the gap, and land,
+   *         each section's mirrored header fading in as its first row goes
    * beat 3  both pages settle: page 1 closes its gaps, both cards shrink
    * -------------------------------------------------------------------- */
 
@@ -246,11 +257,11 @@
   const NARROW_DUR    = 580;
   const CARD2_DELAY   = HOLD + 180;
   const CARD2_DUR     = 520;
-  const NEWHEAD_DELAY = HOLD + 420;
 
   const MOVE_DELAY    = HOLD + 640;
-  const MOVE_STAG     = 70;
+  const MOVE_STAG     = 75;
   const MOVE_DUR      = 660;
+  const HEAD_DUR      = 380;
   const LIFT          = 44;                  // arc height for a migrating row
 
   const LAST_LANDING  = MOVE_DELAY + (MOVERS.length - 1) * MOVE_STAG + MOVE_DUR;
@@ -285,10 +296,12 @@
     Object.assign(card1.style, cardFrame(A),  { opacity:1 });
     Object.assign(card2.style, cardFrame(M2), { opacity:0 });
 
-    ORDER_ALL.forEach(it => {
+    ORDER_A.forEach(it => {
       Object.assign(els[it.id].style, itemFrame(POS_A[it.id]), { opacity:1, boxShadow:'none' });
     });
-    Object.assign(els[NEW_HEADER.id].style, itemFrame(POS_LAND[NEW_HEADER.id]), { opacity:0 });
+    MIRRORS.forEach(it => {
+      Object.assign(els[it.id].style, itemFrame(POS_LAND[it.id]), { opacity:0 });
+    });
   }
 
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -310,7 +323,7 @@
     animate(card1, [cardFrame(A), cardFrame(M1)],
       { duration:NARROW_DUR, delay:HOLD, easing:EASE_CARD });
 
-    ORDER_ALL.forEach(it => {
+    ORDER_A.forEach(it => {
       animate(els[it.id], [itemFrame(POS_A[it.id]), itemFrame(POS_STACK[it.id])],
         { duration:NARROW_DUR, delay:HOLD, easing:EASE_CARD });
     });
@@ -323,10 +336,7 @@
         width:M2.w + 'px', height:M2.h + 'px' }
     ], { duration:CARD2_DUR, delay:CARD2_DELAY, easing:EASE_CARD });
 
-    animate(els[NEW_HEADER.id], [{ opacity:0 }, { opacity:1 }],
-      { duration:420, delay:NEWHEAD_DELAY, easing:'ease-out' });
-
-    /* beat 2 — the migrating settings arc across the gap */
+    /* beat 2 — the migrating settings arc across the gap, top to bottom */
     MOVERS.forEach((it, i) => {
       const a = POS_STACK[it.id], b = POS_LAND[it.id];
       const mid = { x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 - LIFT, w:(a.w + b.w) / 2 };
@@ -340,15 +350,26 @@
       ], { duration:MOVE_DUR, delay:MOVE_DELAY + i * MOVE_STAG, easing:EASE_MOVE });
     });
 
+    /* beat 2 — each mirrored header fades in as its section's first row leaves */
+    SECTIONS.forEach(sec => {
+      const first = rowsOn(sec, 2)[0];
+      const when = MOVE_DELAY + MOVERS.indexOf(first) * MOVE_STAG;
+      animate(els[sec.id + 'b'], [{ opacity:0 }, { opacity:1 }],
+        { duration:HEAD_DUR, delay:when, easing:'ease-out' });
+    });
+
     /* beat 3 — both pages settle to their final height and position */
     animate(card1, [cardFrame(M1), cardFrame(B1)],
       { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
     animate(card2, [cardFrame(M2), cardFrame(B2)],
       { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
 
-    ORDER_P1.concat(ORDER_P2).forEach(it => {
-      const from = (it.page === 2) ? POS_LAND[it.id] : POS_STACK[it.id];
-      animate(els[it.id], [itemFrame(from), itemFrame(POS_B[it.id])],
+    ORDER_P1.forEach(it => {
+      animate(els[it.id], [itemFrame(POS_STACK[it.id]), itemFrame(POS_B[it.id])],
+        { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
+    });
+    ORDER_P2.forEach(it => {
+      animate(els[it.id], [itemFrame(POS_LAND[it.id]), itemFrame(POS_B[it.id])],
         { duration:SETTLE_DUR, delay:SETTLE_DELAY, easing:EASE_SETTLE });
     });
   }
