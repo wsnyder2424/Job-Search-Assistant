@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 313 238" width="313" height="238"
+     fill="none" role="img" aria-label="Pay band comparison">
+  <!--
+    PayFinder pay-band chart — rebuilt from Figma
+    file 1LlYtKWrsjQF5wuLnapCiJ, node 10225:60542 ("Group 2612").
+    Geometry and colours are taken from the node's own values; the parts are
+    named and separated so they can be animated individually.
+
+    Tokens: Green 500 #61A058 · Gray 600 #B0B0B0 · Teal 500 #007B80
+            Teal 400 #30BCC0 · Text Primary #2E2E2E · White #FFFFFF
+  -->
+
+  <g id="bands">
+    <rect id="band-green" x="60" y="90" width="180" height="20" rx="4" fill="#61A058"/>
+
+    <g id="band-grey">
+      <rect x="60" y="120" width="240" height="20" rx="4" fill="#B0B0B0"/>
+      <line id="band-grey-tick" x1="180" y1="120" x2="180" y2="140"
+            stroke="#2E2E2E" stroke-width="1"/>
+    </g>
+
+    <rect id="band-teal-500" x="0" y="150" width="240" height="20" rx="4" fill="#007B80"/>
+    <rect id="band-teal-400" x="60" y="180" width="240" height="20" rx="4" fill="#30BCC0"/>
+  </g>
+
+  <!-- current employees: a box-and-whisker across the bottom -->
+  <g id="current-employees" stroke="#007B80" stroke-width="1">
+    <line x1="47"  y1="220" x2="102" y2="220"/>
+    <line x1="237" y1="220" x2="312" y2="220"/>
+    <line id="whisker-cap-left"  x1="47"  y1="210" x2="47"  y2="230"/>
+    <line id="whisker-cap-right" x1="312" y1="210" x2="312" y2="230"/>
+    <rect id="employee-box" x="101" y="210" width="137" height="20" rx="4" fill="#FFFFFF"/>
+    <line id="employee-median" x1="170" y1="210" x2="170" y2="230"/>
+  </g>
+
+  <!-- the lollipop marker -->
+  <g id="marker" stroke="#2E2E2E" stroke-width="1">
+    <line id="marker-stem" x1="140" y1="79" x2="140" y2="238"/>
+    <circle id="marker-head" cx="140" cy="40" r="39.5" fill="#FFFFFF"/>
+  </g>
+</svg>
