@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nine Settings Surfaces</title>
+<style>
+  :root{
+    --slide-bg:#FDFDFC;
+    --card:#FFFFFF;
+    --card-border:#E4E8EE;
+    --bar-header:#AEB7C4;
+    --bar-label:#CCD3DD;
+    --bar-sub:#E0E5EC;
+    --track:#E0E5EB;
+    --track-on:#BCC4CF;
+    --chrome-bg:#F4F6F9;
+    --chrome-line:#DDE2E9;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0; overflow:hidden;
+    background:var(--slide-bg);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  /* the band of surfaces, wider than the slide, that travels across it */
+  #band{
+    position:absolute; top:0; left:0; height:900px;
+    display:flex; align-items:center; gap:56px;
+    padding:0 120px;
+    will-change:transform;
+  }
+
+  .screen{
+    flex:0 0 auto;
+    box-sizing:border-box;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 14px 34px -12px rgba(16,24,40,.16);
+    overflow:hidden;
+    display:flex;
+  }
+
+  /* ---- the skeleton vocabulary every surface is drawn from ---- */
+  .bar{ background:var(--bar-label); border-radius:5px; height:10px; }
+  .bar.head{ background:var(--bar-header); height:11px; border-radius:6px; }
+  .bar.sub{ background:var(--bar-sub); height:8px; }
+  .col{ display:flex; flex-direction:column; }
+  .rowline{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .pane{ padding:16px; box-sizing:border-box; }
+  .rail{ background:var(--chrome-bg); border-right:1px solid var(--chrome-line); }
+  .topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--chrome-line); }
+  .toggle{ width:26px; height:15px; border-radius:8px; background:var(--track); flex:0 0 auto; position:relative; }
+  .toggle.on{ background:var(--track-on); }
+  .toggle i{ position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#fff; }
+  .toggle.on i{ left:13px; }
+  .field{ height:20px; border:1px solid var(--chrome-line); border-radius:4px; background:#fff; flex:0 0 auto; }
+  .tile{ border:1px solid var(--chrome-line); border-radius:6px; background:var(--chrome-bg); }
+  .tab{ height:8px; border-radius:4px; background:var(--bar-sub); }
+  .tab.sel{ background:var(--bar-header); }
+  .scrim{ position:absolute; inset:0; background:rgba(16,24,40,.10); }
+  .dialog{
+    position:absolute; background:#fff; border:1px solid var(--chrome-line);
+    border-radius:10px; box-shadow:0 10px 24px -8px rgba(16,24,40,.3);
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div id="band"></div></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  /* ------------------------------------------------------------------ *
+   * PLACEHOLDERS. Nine genuinely different settings-surface patterns,
+   * but invented — they stand in until the real nine are traced from the
+   * Figma board. Swapping them is a matter of editing this list; nothing
+   * below depends on what any one surface contains.
+   * ------------------------------------------------------------------ */
+
+  const px = n => n + 'px';
+  const bars = (n, widths, cls) => widths.slice(0, n)
+    .map(w => `<div class="bar ${cls || ''}" style="width:${w}"></div>`).join('');
+
+  const SURFACES = [
+    // 1 — left nav rail, simple form rows
+    { w:430, h:310, html:`
+      <div class="rail" style="width:96px"><div class="pane col" style="gap:12px">
+        ${bars(6, ['70%','55%','80%','48%','64%','58%'], 'sub')}
+      </div></div>
+      <div class="pane col" style="flex:1; gap:18px">
+        <div class="bar head" style="width:38%"></div>
+        ${[1,2,3,4].map(() => `<div class="rowline"><div class="bar" style="width:52%"></div><div class="toggle on"><i></i></div></div>`).join('')}
+      </div>` },
+
+    // 2 — top tabs, two columns of fields
+    { w:480, h:290, html:`
+      <div class="col" style="flex:1">
+        <div class="topbar pane" style="padding:12px 16px; display:flex; gap:14px; align-items:center">
+          <div class="tab sel" style="width:44px"></div><div class="tab" style="width:38px"></div>
+          <div class="tab" style="width:52px"></div><div class="tab" style="width:34px"></div>
+        </div>
+        <div class="pane" style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px 20px">
+          ${[1,2,3,4,5,6].map(() => `<div class="col" style="gap:6px"><div class="bar sub" style="width:46%"></div><div class="field"></div></div>`).join('')}
+        </div>
+      </div>` },
+
+    // 3 — a modal over a dimmed page
+    { w:400, h:330, html:`
+      <div class="col" style="flex:1; position:relative">
+        <div class="pane col" style="gap:14px; flex:1">
+          ${bars(7, ['62%','48%','70%','40%','58%','66%','44%'])}
+        </div>
+        <div class="scrim"></div>
+        <div class="dialog" style="left:40px; right:40px; top:70px">
+          <div class="pane col" style="gap:12px">
+            <div class="bar head" style="width:46%"></div>
+            ${bars(3, ['84%','70%','60%'], 'sub')}
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px">
+              <div class="field" style="width:46px"></div><div class="field" style="width:58px; background:var(--bar-header); border-color:var(--bar-header)"></div>
+            </div>
+          </div>
+        </div>
+      </div>` },
+
+    // 4 — long list, inline toggles, no nav at all
+    { w:440, h:300, html:`
+      <div class="pane col" style="flex:1; gap:11px">
+        <div class="bar head" style="width:30%; margin-bottom:4px"></div>
+        ${['64%','52%','72%','46%','58%','68%','50%','62%'].map((w,i) =>
+          `<div class="rowline"><div class="bar" style="width:${w}"></div><div class="toggle ${i%3?'on':''}"><i></i></div></div>`).join('')}
+      </div>` },
+
+    // 5 — grid of setting tiles
+    { w:500, h:320, html:`
+      <div class="pane col" style="flex:1; gap:14px">
+        <div class="bar head" style="width:34%"></div>
+        <div style="flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:1fr 1fr; gap:12px">
+          ${[1,2,3,4,5,6].map(() => `<div class="tile" style="padding:10px; display:flex; flex-direction:column; gap:7px">
+            <div class="bar" style="width:60%"></div><div class="bar sub" style="width:84%"></div><div class="bar sub" style="width:44%"></div>
+          </div>`).join('')}
+        </div>
+      </div>` },
+
+    // 6 — a table with headers and per-row controls
+    { w:520, h:300, html:`
+      <div class="pane col" style="flex:1; gap:0">
+        <div class="rowline" style="padding-bottom:10px; border-bottom:1px solid var(--chrome-line)">
+          <div class="bar head" style="width:26%"></div><div class="bar head" style="width:18%"></div>
+          <div class="bar head" style="width:14%"></div><div class="bar head" style="width:10%"></div>
+        </div>
+        ${[1,2,3,4,5,6].map(() => `<div class="rowline" style="padding:11px 0; border-bottom:1px solid var(--chrome-line)">
+          <div class="bar" style="width:26%"></div><div class="bar sub" style="width:18%"></div>
+          <div class="field" style="width:56px"></div><div class="toggle on"><i></i></div>
+        </div>`).join('')}
+      </div>` },
+
+    // 7 — menu list on the left, detail pane on the right
+    { w:430, h:330, html:`
+      <div class="rail" style="width:132px"><div class="pane col" style="gap:10px">
+        ${['80%','62%','74%','56%','68%','50%','72%'].map((w,i) =>
+          `<div class="bar ${i===1?'':'sub'}" style="width:${w}"></div>`).join('')}
+      </div></div>
+      <div class="pane col" style="flex:1; gap:14px">
+        <div class="bar head" style="width:52%"></div>
+        ${bars(2, ['90%','72%'], 'sub')}
+        <div class="field" style="width:100%"></div>
+        <div class="field" style="width:100%"></div>
+        <div class="rowline"><div class="bar sub" style="width:44%"></div><div class="toggle"><i></i></div></div>
+      </div>` },
+
+    // 8 — accordion sections, one open
+    { w:450, h:310, html:`
+      <div class="pane col" style="flex:1; gap:10px">
+        ${[0,1,2].map(i => `
+          <div class="tile" style="padding:11px; display:flex; flex-direction:column; gap:${i===1?'10px':'0'}">
+            <div class="rowline"><div class="bar head" style="width:${40+i*8}%"></div><div class="bar sub" style="width:9px; height:9px; border-radius:2px"></div></div>
+            ${i===1 ? `<div class="col" style="gap:9px; padding-top:4px">
+              ${['76%','58%','68%'].map(w => `<div class="rowline"><div class="bar" style="width:${w}"></div><div class="toggle on"><i></i></div></div>`).join('')}
+            </div>` : ''}
+          </div>`).join('')}
+      </div>` },
+
+    // 9 — a stepper, one column, progress along the top
+    { w:410, h:320, html:`
+      <div class="col" style="flex:1">
+        <div class="topbar pane" style="padding:13px 16px; display:flex; align-items:center; gap:8px">
+          ${[0,1,2,3].map(i => `<div class="bar ${i<2?'head':'sub'}" style="flex:1; height:6px"></div>`).join('')}
+        </div>
+        <div class="pane col" style="flex:1; gap:14px">
+          <div class="bar head" style="width:56%"></div>
+          <div class="bar sub" style="width:80%"></div>
+          <div class="col" style="gap:6px"><div class="bar sub" style="width:36%"></div><div class="field"></div></div>
+          <div class="col" style="gap:6px"><div class="bar sub" style="width:44%"></div><div class="field"></div></div>
+          <div style="display:flex; justify-content:flex-end; margin-top:auto">
+            <div class="field" style="width:64px; background:var(--bar-header); border-color:var(--bar-header)"></div>
+          </div>
+        </div>
+      </div>` },
+  ];
+
+  const band = document.getElementById('band');
+  SURFACES.forEach(s => {
+    const screen = document.createElement('div');
+    screen.className = 'screen';
+    screen.style.width  = px(s.w);
+    screen.style.height = px(s.h);
+    screen.innerHTML = s.html;
+    band.appendChild(screen);
+  });
+
+  /* ---------------- the traverse ------------------------------------- *
+   * One eased pass, not a linear crawl: it leans into the move and coasts
+   * to a stop, so the row arrives rather than simply stopping.
+   * ------------------------------------------------------------------ */
+
+  const HOLD  = 5000;
+  const DUR   = 7000;
+  const EASE  = 'cubic-bezier(.62,0,.30,1)';
+
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let anim = null;
+
+  function distance(){
+    return Math.max(0, band.scrollWidth - STAGE_W);
+  }
+
+  function play(){
+    if (anim) anim.cancel();
+    const d = distance();
+    band.style.transform = 'translateX(0px)';
+    if (REDUCED.matches){ band.style.transform = `translateX(${-d}px)`; return; }
+    anim = band.animate(
+      [{ transform:'translateX(0px)' }, { transform:`translateX(${-d}px)` }],
+      { duration:DUR, delay:HOLD, easing:EASE, fill:'forwards' }
+    );
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  const stage = document.getElementById('stage');
+  function fit(){
+    const s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${s})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * s) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * s) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
