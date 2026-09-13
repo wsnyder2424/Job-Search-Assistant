@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Views in Sync</title>
+<style>
+  :root{
+    --slide-bg:#FDFDFC;
+    --card:#FFFFFF;
+    --card-border:#E4E8EE;
+    --bar-header:#AEB7C4;
+    --bar-label:#CCD3DD;
+    --bar-sub:#E0E5EC;
+    --track:#E0E5EB;
+    --track-on:#BCC4CF;
+    --value:#D5DBE4;
+    --chrome-bg:#F7F9FB;
+    --chrome-line:#DDE2E9;
+    --fill:#C4CCD6;
+    --ink:#39414E;
+    --title:#333B47;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    overflow:hidden;
+    background:var(--slide-bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  /* 16:9 logical stage, scaled to fit whatever it is projected on */
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  .card{
+    position:absolute;
+    width:640px;
+    box-sizing:border-box;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 18px 44px -14px rgba(16,24,40,.16);
+    padding:34px;
+    display:flex; flex-direction:column;
+  }
+
+  /* the one piece of real text in the series */
+  .title{
+    font-size:19px;
+    font-weight:600;
+    letter-spacing:-.01em;
+    color:var(--title);
+    margin-bottom:24px;
+  }
+
+  /* ---- structure ---- */
+  .section + .section{ margin-top:30px; }
+  .row{
+    position:relative;
+    display:flex; align-items:center; gap:20px;
+    min-height:36px;
+  }
+  .row + .row{ margin-top:16px; }
+  .labels, .ctrls{ position:relative; z-index:1; }
+  .labels{ flex:1 1 auto; min-width:0; }
+  .ctrls{ flex:0 0 auto; display:flex; align-items:center; }
+
+  /* the soft wash that marks a row as it changes */
+  .glow{
+    position:absolute; inset:-8px -14px;
+    border-radius:10px;
+    background:rgba(57,65,78,.075);
+    opacity:0; z-index:0;
+  }
+
+  /* ---- skeleton bars ---- */
+  .bar{
+    border-radius:7px;
+    background-color:var(--bar-label);
+    background-image:linear-gradient(100deg,
+      rgba(255,255,255,0) 38%, rgba(255,255,255,.3) 50%, rgba(255,255,255,0) 62%);
+    background-size:260% 100%;
+    background-repeat:no-repeat;
+    animation:shimmer 3.6s linear infinite;
+  }
+  .bar.head{ height:12px; border-radius:6px; background-color:var(--bar-header); margin-bottom:22px; }
+  .bar.label{ height:14px; }
+  .bar.sub{ height:10px; border-radius:5px; margin-top:8px; background-color:var(--bar-sub); }
+
+  @keyframes shimmer{
+    0%   { background-position:150% 0; }
+    100% { background-position:-150% 0; }
+  }
+
+  /* ---- controls ---- */
+  .toggle{ width:46px; height:26px; border-radius:13px; background:var(--track); position:relative; }
+  .toggle.on{ background:var(--track-on); }
+  .knob{
+    position:absolute; top:3px; left:3px; width:20px; height:20px;
+    border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.22);
+  }
+  .toggle.on .knob{ left:23px; }
+
+  .value{ width:78px; height:12px; border-radius:6px; background:var(--value); }
+
+  .select{
+    width:150px; height:30px; box-sizing:border-box;
+    border:1px solid var(--chrome-line); border-radius:8px;
+    background:var(--chrome-bg);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 10px;
+  }
+  .select .pill{ height:10px; border-radius:5px; background:var(--value); width:58px; }
+  .caret{
+    width:7px; height:7px; flex:0 0 auto;
+    border-right:2px solid var(--bar-header);
+    border-bottom:2px solid var(--bar-header);
+    transform:translateY(-2px) rotate(45deg);
+  }
+
+  .slider{ width:150px; height:16px; position:relative; display:flex; align-items:center; }
+  .slider .rail{ position:absolute; left:0; right:0; height:4px; border-radius:2px; background:var(--track); }
+  .slider .fill{ position:absolute; left:0; height:4px; border-radius:2px; background:var(--fill); width:30%; }
+  .slider .grip{
+    position:absolute; left:calc(30% - 8px);
+    width:16px; height:16px; border-radius:50%;
+    background:#fff; border:1px solid var(--chrome-line);
+    box-shadow:0 1px 2px rgba(16,24,40,.2);
+  }
+
+  /* ---- the pointer, the click ring, and the travelling pulse ---- */
+  #cursor{
+    position:absolute; left:0; top:0;
+    width:26px; height:36px;
+    z-index:40; opacity:0;
+    filter:drop-shadow(0 2px 4px rgba(16,24,40,.28));
+  }
+  .ring{
+    position:absolute; left:0; top:0;
+    width:26px; height:26px; margin:-13px 0 0 -13px;
+    border-radius:50%;
+    border:2px solid rgba(57,65,78,.5);
+    opacity:0; z-index:35;
+  }
+  .pulse{
+    position:absolute; left:0; top:0;
+    width:13px; height:13px; margin:-6.5px 0 0 -6.5px;
+    border-radius:50%;
+    background:var(--ink);
+    box-shadow:0 0 0 6px rgba(57,65,78,.12), 0 0 18px 4px rgba(57,65,78,.22);
+    opacity:0; z-index:38;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="card" id="cardLeft"></div>
+  <div class="card" id="cardRight"></div>
+
+  <div class="ring"  id="ring"></div>
+  <div class="pulse" id="pulse"></div>
+  <svg id="cursor" viewBox="0 0 17 23" aria-hidden="true">
+    <path d="M1 1 L1 20 L6 15.6 L9 22 L12.4 20.5 L9.5 14.3 L15.6 14 Z"
+          fill="#FFFFFF" stroke="#39414E" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+  const CARD_W = 640, GAP = 60;
+  const LEFT_X  = (STAGE_W - (CARD_W * 2 + GAP)) / 2;      // 130
+  const RIGHT_X = LEFT_X + CARD_W + GAP;                   // 830
+
+  /* ---------------- content ------------------------------------------ *
+   * Both pages hold the same settings; three of the rows are the ones an
+   * edit lands on. `mark` names them so the timeline can find the same
+   * row on either page without counting indexes.
+   * ------------------------------------------------------------------ */
+
+  const SECTIONS = [
+    { rows:[
+      { w:.46, sub:.30, ctrl:'toggle', on:false, mark:'a' },
+      { w:.60,          ctrl:'toggle', on:true   },
+      { w:.40, sub:.26, ctrl:'value'   },
+    ]},
+    { head:.28, rows:[
+      { w:.44,          ctrl:'select', mark:'b'  },
+      { w:.52, sub:.28, ctrl:'toggle', on:true   },
+      { w:.36,          ctrl:'slider', mark:'c'  },
+    ]},
+    { head:.22, rows:[
+      { w:.48, sub:.30, ctrl:'toggle', on:false  },
+      { w:.38,          ctrl:'value'   },
+    ]},
+  ];
+
+  const el = (cls, html) => {
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    if (html) d.innerHTML = html;
+    return d;
+  };
+
+  const CONTROLS = {
+    'toggle': r => el('toggle' + (r.on ? ' on' : ''), '<div class="knob"></div>'),
+    'value':  () => el('value'),
+    'select': () => el('select', '<div class="pill"></div><div class="caret"></div>'),
+    'slider': () => el('slider',
+                  '<div class="rail"></div><div class="fill"></div><div class="grip"></div>'),
+  };
+
+  function buildPage(card, title){
+    const heading = el('title');
+    heading.textContent = title;
+    card.appendChild(heading);
+
+    SECTIONS.forEach(sec => {
+      const section = el('section');
+      if (sec.head){
+        const head = el('bar head');
+        head.style.width = (sec.head * 100) + '%';
+        section.appendChild(head);
+      }
+      sec.rows.forEach(r => {
+        const row = el('row');
+        if (r.mark) row.dataset.mark = r.mark;
+        row.appendChild(el('glow'));
+
+        const labels = el('labels');
+        const label = el('bar label');
+        label.style.width = (r.w * 100) + '%';
+        labels.appendChild(label);
+        if (r.sub){
+          const sub = el('bar sub');
+          sub.style.width = (r.sub * 100) + '%';
+          labels.appendChild(sub);
+        }
+        row.appendChild(labels);
+
+        const ctrls = el('ctrls');
+        ctrls.appendChild(CONTROLS[r.ctrl](r));
+        row.appendChild(ctrls);
+
+        section.appendChild(row);
+      });
+      card.appendChild(section);
+    });
+
+    card.querySelectorAll('.bar').forEach(b => {
+      b.style.animationDelay = (-Math.random() * 3.6).toFixed(2) + 's';
+    });
+  }
+
+  const stage     = document.getElementById('stage');
+  const cardLeft  = document.getElementById('cardLeft');
+  const cardRight = document.getElementById('cardRight');
+  const cursor    = document.getElementById('cursor');
+  const ring      = document.getElementById('ring');
+  const pulse     = document.getElementById('pulse');
+
+  buildPage(cardLeft,  'Default view');
+  buildPage(cardRight, 'Recruiter view');
+
+  // Same content, so one measurement places both.
+  const CARD_H = cardLeft.offsetHeight;
+  const CARD_Y = Math.round((STAGE_H - CARD_H) / 2);
+  cardLeft.style.left  = LEFT_X + 'px';
+  cardRight.style.left = RIGHT_X + 'px';
+  cardLeft.style.top = cardRight.style.top = CARD_Y + 'px';
+
+  const rowOf  = (card, mark) => card.querySelector(`.row[data-mark="${mark}"]`);
+  const ctrlOf = (card, mark) => rowOf(card, mark).querySelector('.ctrls > *');
+
+  /* ---------------- the three edits ----------------------------------- *
+   * Each knows how to play itself on a given control, so the same routine
+   * drives the left page (under the cursor) and the right page (a moment
+   * after the pulse lands).
+   * ------------------------------------------------------------------ */
+
+  const EDITS = {
+    // a switch comes on
+    a: (node, delay) => {
+      animate(node, [{ background:'#E0E5EB' }, { background:'#BCC4CF' }],
+        { duration:260, delay, easing:'ease-out' });
+      animate(node.querySelector('.knob'), [{ left:'3px' }, { left:'23px' }],
+        { duration:260, delay, easing:'cubic-bezier(.4,1.4,.5,1)' });
+    },
+    // a different option is chosen, so the value sitting in the field changes
+    b: (node, delay) => {
+      animate(node.querySelector('.pill'), [
+        { width:'58px', opacity:1 },
+        { width:'58px', opacity:.15, offset:.35 },
+        { width:'92px', opacity:.15, offset:.45 },
+        { width:'92px', opacity:1 }
+      ], { duration:420, delay, easing:'ease-in-out' });
+    },
+    // a slider is pushed up
+    c: (node, delay) => {
+      animate(node.querySelector('.fill'), [{ width:'30%' }, { width:'72%' }],
+        { duration:420, delay, easing:'cubic-bezier(.3,.9,.35,1)' });
+      animate(node.querySelector('.grip'),
+        [{ left:'calc(30% - 8px)' }, { left:'calc(72% - 8px)' }],
+        { duration:420, delay, easing:'cubic-bezier(.3,.9,.35,1)' });
+    },
+  };
+
+  /* ---------------- timeline ------------------------------------------ */
+
+  const HOLD      = 5000;   // sit on the two pages this long before moving
+  const TRAVEL    = 560;    // cursor between controls
+  const SETTLE    = 180;    // beat between arriving and clicking
+  const PULSE_DUR = 780;
+  const GLOW_IN   = 160;
+  const GLOW_HOLD = 620;
+
+  const EASE_MOVE  = 'cubic-bezier(.45,.05,.2,1)';
+  const EASE_PULSE = 'linear';   // a travelling pulse should not accelerate away
+
+  const anims = [];
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function animate(node, frames, opts){
+    const a = node.animate(frames, Object.assign({ fill:'forwards' }, opts));
+    anims.push(a);
+    return a;
+  }
+
+  // Where something sits in the 1600x900 stage, whatever the screen scale is.
+  let SCALE = 1;
+  function box(node){
+    const r = node.getBoundingClientRect();
+    const s = stage.getBoundingClientRect();
+    return { x:(r.left - s.left) / SCALE, y:(r.top - s.top) / SCALE,
+             w:r.width / SCALE, h:r.height / SCALE };
+  }
+  function centre(node){
+    const b = box(node);
+    return { x:b.x + b.w / 2, y:b.y + b.h / 2 };
+  }
+
+  function glow(row, delay){
+    animate(row.querySelector('.glow'), [
+      { opacity:0 }, { opacity:1, offset:.18 },
+      { opacity:1, offset:.75 }, { opacity:0 }
+    ], { duration:GLOW_IN + GLOW_HOLD, delay, easing:'ease-in-out' });
+  }
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+    cursor.style.opacity = 0;
+    ring.style.opacity = 0;
+    pulse.style.opacity = 0;
+    [cardLeft, cardRight].forEach(card => {
+      card.querySelectorAll('.glow').forEach(g => { g.style.opacity = 0; });
+      card.querySelectorAll('.toggle').forEach(t => {
+        t.style.background = t.classList.contains('on') ? '#BCC4CF' : '#E0E5EB';
+        t.querySelector('.knob').style.left = t.classList.contains('on') ? '23px' : '3px';
+      });
+      card.querySelectorAll('.select .pill').forEach(p => { p.style.width = '58px'; p.style.opacity = 1; });
+      card.querySelectorAll('.slider').forEach(s => {
+        s.querySelector('.fill').style.width = '30%';
+        s.querySelector('.grip').style.left  = 'calc(30% - 8px)';
+      });
+    });
+  }
+
+  function snapToEnd(){
+    reset();
+    ['a','b','c'].forEach(mark => {
+      [cardLeft, cardRight].forEach(card => {
+        const node = ctrlOf(card, mark);
+        if (mark === 'a'){
+          node.style.background = '#BCC4CF';
+          node.querySelector('.knob').style.left = '23px';
+        } else if (mark === 'b'){
+          node.querySelector('.pill').style.width = '92px';
+        } else {
+          node.querySelector('.fill').style.width = '72%';
+          node.querySelector('.grip').style.left  = 'calc(72% - 8px)';
+        }
+      });
+    });
+  }
+
+  function play(){
+    reset();
+    if (REDUCED.matches){ snapToEnd(); return; }
+
+    const START = { x:LEFT_X + 120, y:CARD_Y + CARD_H + 90 };   // off below the left page
+    const EXIT  = { x:RIGHT_X + 300, y:CARD_Y + CARD_H + 120 };
+
+    const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+    cursor.style.transform = put(START);
+
+    animate(cursor, [{ opacity:0 }, { opacity:1 }],
+      { duration:260, delay:HOLD - 120, easing:'ease-out' });
+
+    let t = HOLD, from = START;
+
+    ['a','b','c'].forEach(mark => {
+      const src = ctrlOf(cardLeft,  mark);
+      const dst = ctrlOf(cardRight, mark);
+      const at  = centre(src);
+      const to  = centre(dst);
+
+      // the pointer travels to the control and presses it
+      animate(cursor, [{ transform:put(from) }, { transform:put(at) }],
+        { duration:TRAVEL, delay:t, easing:EASE_MOVE });
+
+      const click = t + TRAVEL + SETTLE;
+
+      animate(cursor, [
+        { scale:1 }, { scale:.88, offset:.35 }, { scale:1 }
+      ], { duration:260, delay:click, easing:'ease-out' });
+
+      ring.style.transform = put(at);
+      animate(ring, [
+        { transform:put(at) + ' scale(.35)', opacity:.55 },
+        { transform:put(at) + ' scale(2.6)', opacity:0 }
+      ], { duration:520, delay:click, easing:'cubic-bezier(.2,.7,.3,1)' });
+
+      // the left page changes
+      glow(rowOf(cardLeft, mark), click);
+      EDITS[mark](src, click + 70);
+
+      // The change travels across, arcing over the gap — but never above the
+      // row it came from, or on the top row it would fly through the title.
+      const ceiling = box(rowOf(cardLeft, mark)).y - 4;
+      const lift = { x:(at.x + to.x) / 2,
+                     y:Math.max(ceiling, Math.min(at.y, to.y) - 40) };
+      const launch = click + 240;
+      animate(pulse, [
+        { transform:put(at) + ' scale(.3)',   opacity:0 },
+        { transform:put(at) + ' scale(1)',    opacity:1, offset:.12 },
+        { transform:put(lift) + ' scale(1)',  opacity:1, offset:.55 },
+        { transform:put(to) + ' scale(1)',    opacity:1, offset:.94 },
+        { transform:put(to) + ' scale(.3)',   opacity:0 }
+      ], { duration:PULSE_DUR, delay:launch, easing:EASE_PULSE });
+
+      // and the right page follows
+      const land = launch + PULSE_DUR - 80;
+      glow(rowOf(cardRight, mark), land);
+      EDITS[mark](dst, land + 60);
+
+      from = at;
+      t = click + 760;
+    });
+
+    animate(cursor, [{ transform:put(from) }, { transform:put(EXIT) }],
+      { duration:700, delay:t + 260, easing:'cubic-bezier(.4,0,.7,1)' });
+    animate(cursor, [{ opacity:1 }, { opacity:0 }],
+      { duration:420, delay:t + 480, easing:'ease-in' });
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  function fit(){
+    SCALE = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${SCALE})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * SCALE) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * SCALE) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // Click anywhere, or press space / R, to replay.
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
