@@ -198,7 +198,7 @@
 
   /* ---------------- timeline ------------------------------------------ */
 
-  const HOLD    = 5000;   // sit on the slide this long before moving
+  const HOLD    = 12000;  // sit on the slide this long before moving
   const TRAVEL  = 640;    // pointer between toggles
   const SETTLE  = 200;    // beat between arriving and pressing
   const STEP    = 900;    // click to next move — the chart needs time to read
@@ -269,6 +269,29 @@
     if (REDUCED.matches){ snapToEnd(); return; }
 
     const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+
+    /* The pointer takes a curved path, not a straight one: a quadratic bezier
+       whose control point sits off to one side of the midpoint, sampled into
+       keyframes. The bow is perpendicular to the travel and scales with the
+       distance, so short hops stay nearly straight and long ones swing wide.
+       (The easing was always a bezier — this is the route, not the rate.) */
+    const arc = (from, to) => {
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const amt = -Math.min(70, len * 0.22);          // down bows right, up bows left
+      const cx = (from.x + to.x) / 2 + (-dy / len) * amt;
+      const cy = (from.y + to.y) / 2 + ( dx / len) * amt;
+      const N = 14, frames = [];
+      for (let i = 0; i <= N; i++){
+        const t = i / N, u = 1 - t;
+        frames.push({
+          transform:put({ x:u*u*from.x + 2*u*t*cx + t*t*to.x,
+                          y:u*u*from.y + 2*u*t*cy + t*t*to.y }),
+          offset:t,
+        });
+      }
+      return frames;
+    };
     const card  = document.querySelector('.card');
     const START = { x:120, y:820 };
     const EXIT  = { x:170, y:880 };
@@ -283,7 +306,7 @@
       const { toggle, layer } = byKey[step.key];
       const to = centre(toggle);
 
-      animate(cursor, [{ transform:put(at) }, { transform:put(to) }],
+      animate(cursor, arc(at, to),
         { duration:TRAVEL, delay:t, easing:EASE_MOVE });
 
       const click = t + TRAVEL + SETTLE;
@@ -316,7 +339,7 @@
       t  = click + STEP;
     });
 
-    animate(cursor, [{ transform:put(at) }, { transform:put(EXIT) }],
+    animate(cursor, arc(at, EXIT),
       { duration:760, delay:t + 240, easing:'cubic-bezier(.4,0,.7,1)' });
     animate(cursor, [{ opacity:1 }, { opacity:0 }],
       { duration:440, delay:t + 460, easing:'ease-in' });
