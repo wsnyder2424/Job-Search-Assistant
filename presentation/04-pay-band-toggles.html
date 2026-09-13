@@ -35,16 +35,12 @@
   #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
 
   /* ---- the settings card (Figma 853:2971) ---- */
+  /* The card's chrome is gone — the controls sit straight on the slide,
+     at the same place its content occupied. */
   .card{
     position:absolute;
-    left:90px; top:262px;
-    width:633px;
-    box-sizing:border-box;
-    padding:32px;
-    background:var(--white);
-    border-bottom:1px solid var(--border-lightest);
-    border-radius:20px;
-    box-shadow:0 6px 5px rgba(0,0,0,.15), 0 2px 1.5px rgba(0,0,0,.3);
+    left:122px; top:294px;
+    width:569px;
   }
   .options{ display:flex; flex-direction:column; gap:16px; width:569px; }
 
@@ -55,22 +51,24 @@
     color:var(--text-primary); white-space:nowrap;
   }
 
+  /* sized to match the toggles in the rest of the series, not Figma's 32x16 */
   .toggle{
     position:relative; flex:0 0 auto;
-    width:32px; height:16px; border-radius:8px;
+    width:46px; height:26px; border-radius:13px;
     background:#EDEDED;
     border:1px solid #C9C9C9;
     box-sizing:border-box;
   }
   .toggle .knob{
-    position:absolute; top:1px; left:1px;
-    width:12px; height:12px; border-radius:50%;
+    position:absolute; top:2px; left:2px;
+    width:20px; height:20px; border-radius:50%;
     background:var(--white);
     border:1px solid #C9C9C9;
     box-sizing:border-box;
+    box-shadow:0 1px 2px rgba(16,24,40,.18);
   }
   .toggle.on{ background:var(--teal-500); border-color:var(--teal-500); }
-  .toggle.on .knob{ left:17px; border-color:var(--teal-500); }
+  .toggle.on .knob{ left:22px; border-color:var(--teal-500); }
 
   .info{
     flex:0 0 auto;
@@ -273,7 +271,7 @@
     node.style.background  = on ? TRACK_ON : TRACK_OFF;
     node.style.borderColor = on ? EDGE_ON  : EDGE_OFF;
     const k = node.querySelector('.knob');
-    k.style.left = on ? '17px' : '1px';
+    k.style.left = on ? '22px' : '2px';
     k.style.borderColor = on ? EDGE_ON : EDGE_OFF;
   }
 
@@ -338,8 +336,8 @@
 
       // the knob's ring travels with it, or an off switch keeps a teal edge
       animate(toggle.querySelector('.knob'), [
-        { left:step.to ? '1px'  : '17px', borderColor:step.to ? EDGE_OFF : EDGE_ON  },
-        { left:step.to ? '17px' : '1px',  borderColor:step.to ? EDGE_ON  : EDGE_OFF }
+        { left:step.to ? '2px'  : '22px', borderColor:step.to ? EDGE_OFF : EDGE_ON  },
+        { left:step.to ? '22px' : '2px',  borderColor:step.to ? EDGE_ON  : EDGE_OFF }
       ], { duration:SWITCH, delay:click, easing:'cubic-bezier(.4,1.4,.5,1)' });
 
       // and its band fades in or out — the row it occupied stays empty
