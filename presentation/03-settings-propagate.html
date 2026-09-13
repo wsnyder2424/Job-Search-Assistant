@@ -320,11 +320,19 @@
   const EASE_MOVE  = 'cubic-bezier(.45,.05,.2,1)';
   const EASE_PULSE = 'linear';   // a travelling pulse should not accelerate away
 
+  // Everything after the hold is stretched by this. Raise it to slow the
+  // whole sequence further, lower it to tighten — the hold is untouched
+  // either way, and no individual timing below needs rewriting.
+  const RATE = 4 / 3;
+
   const anims = [];
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function animate(node, frames, opts){
-    const a = node.animate(frames, Object.assign({ fill:'forwards' }, opts));
+    const o = Object.assign({ fill:'forwards' }, opts);
+    o.duration = (o.duration || 0) * RATE;
+    o.delay    = HOLD + ((o.delay || 0) - HOLD) * RATE;   // hold stays put
+    const a = node.animate(frames, o);
     anims.push(a);
     return a;
   }
@@ -398,7 +406,7 @@
     cursor.style.transform = put(START);
 
     animate(cursor, [{ opacity:0 }, { opacity:1 }],
-      { duration:260, delay:HOLD - 120, easing:'ease-out' });
+      { duration:260, delay:HOLD, easing:'ease-out' });   // nothing stirs before the hold is up
 
     let t = HOLD, from = START;
 
