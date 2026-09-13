@@ -198,7 +198,9 @@
 
   /* ---------------- timeline ------------------------------------------ */
 
-  const HOLD    = 12000;  // sit on the slide this long before moving
+  const HOLD    = 30660; // sit on the slide this long before moving — set to
+                         // the moment the sequence used to finish, so the first
+                         // toggle now flips where the slide previously ended
   const TRAVEL  = 640;    // pointer between toggles
   const SETTLE  = 200;    // beat between arriving and pressing
   const STEP    = 900;    // click to next move — the chart needs time to read
