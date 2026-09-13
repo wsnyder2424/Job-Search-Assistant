@@ -98,7 +98,7 @@
 
   const SURFACES = [
     // 1 — left nav rail, simple form rows
-    { w:300, h:226, html:`
+    { w:300, h:226, name:'nav-rail', html:`
       <div class="rail" style="width:96px"><div class="pane col" style="gap:12px">
         ${bars(6, ['70%','55%','80%','48%','64%','58%'], 'sub')}
       </div></div>
@@ -108,7 +108,7 @@
       </div>` },
 
     // 2 — top tabs, two columns of fields
-    { w:276, h:210, html:`
+    { w:276, h:210, name:'top-tabs', html:`
       <div class="col" style="flex:1">
         <div class="topbar pane" style="padding:12px 16px; display:flex; gap:14px; align-items:center">
           <div class="tab sel" style="width:44px"></div><div class="tab" style="width:38px"></div>
@@ -120,7 +120,7 @@
       </div>` },
 
     // 3 — a modal over a dimmed page
-    { w:268, h:238, html:`
+    { w:268, h:238, name:'modal', html:`
       <div class="col" style="flex:1; position:relative">
         <div class="pane col" style="gap:14px; flex:1">
           ${bars(7, ['62%','48%','70%','40%','58%','66%','44%'])}
@@ -138,7 +138,7 @@
       </div>` },
 
     // 4 — long list, inline toggles, no nav at all
-    { w:264, h:214, html:`
+    { w:264, h:214, name:'plain-list', html:`
       <div class="pane col" style="flex:1; gap:11px">
         <div class="bar head" style="width:30%; margin-bottom:4px"></div>
         ${['64%','52%','72%','46%','58%','68%','50%','62%'].map((w,i) =>
@@ -146,7 +146,7 @@
       </div>` },
 
     // 5 — grid of setting tiles
-    { w:252, h:222, html:`
+    { w:252, h:222, name:'tile-grid', html:`
       <div class="pane col" style="flex:1; gap:14px">
         <div class="bar head" style="width:34%"></div>
         <div style="flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:1fr 1fr; gap:12px">
@@ -157,7 +157,7 @@
       </div>` },
 
     // 6 — a table with headers and per-row controls
-    { w:348, h:240, html:`
+    { w:348, h:240, name:'table', html:`
       <div class="pane col" style="flex:1; gap:0">
         <div class="rowline" style="padding-bottom:10px; border-bottom:1px solid var(--chrome-line)">
           <div class="bar head" style="width:26%"></div><div class="bar head" style="width:18%"></div>
@@ -170,7 +170,7 @@
       </div>` },
 
     // 7 — menu list on the left, detail pane on the right
-    { w:342, h:246, html:`
+    { w:342, h:246, name:'split-detail', html:`
       <div class="rail" style="width:132px"><div class="pane col" style="gap:10px">
         ${['80%','62%','74%','56%','68%','50%','72%'].map((w,i) =>
           `<div class="bar ${i===1?'':'sub'}" style="width:${w}"></div>`).join('')}
@@ -184,7 +184,7 @@
       </div>` },
 
     // 8 — accordion sections, one open
-    { w:330, h:240, html:`
+    { w:330, h:240, name:'accordion', html:`
       <div class="pane col" style="flex:1; gap:10px">
         ${[0,1,2].map(i => `
           <div class="tile" style="padding:11px; display:flex; flex-direction:column; gap:${i===1?'10px':'0'}">
@@ -196,7 +196,7 @@
       </div>` },
 
     // 9 — a stepper, one column, progress along the top
-    { w:368, h:238, html:`
+    { w:368, h:238, name:'stepper', html:`
       <div class="col" style="flex:1">
         <div class="topbar pane" style="padding:13px 16px; display:flex; align-items:center; gap:8px">
           ${[0,1,2,3].map(i => `<div class="bar ${i<2?'head':'sub'}" style="flex:1; height:6px"></div>`).join('')}
@@ -221,6 +221,7 @@
     screen.className = 'screen';
     screen.style.width  = px(s.w);
     screen.style.height = px(s.h);
+    screen.dataset.name = s.name;
     screen.innerHTML = s.html;
     (i < 5 ? row1 : row2).appendChild(screen);
   });
