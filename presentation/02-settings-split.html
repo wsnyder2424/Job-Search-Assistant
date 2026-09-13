@@ -18,6 +18,7 @@
     --chrome-bg:#F7F9FB;
     --chrome-line:#DDE2E9;
     --fill:#C4CCD6;
+    --ink:#39414E;
   }
 
   html,body{height:100%;}
@@ -53,10 +54,23 @@
 
   /* ---- structure ---- */
   .section + .section{ margin-top:30px; }
-  .row{ display:flex; align-items:center; gap:20px; min-height:36px; }
+  .row{
+    position:relative;
+    display:flex; align-items:center; gap:20px;
+    min-height:36px;
+  }
   .row + .row{ margin-top:16px; }
+  .labels, .ctrls{ position:relative; z-index:1; }
   .labels{ flex:1 1 auto; min-width:0; }
   .ctrls{ flex:0 0 auto; display:flex; align-items:center; }
+
+  /* the soft wash that marks a row as it changes */
+  .glow{
+    position:absolute; inset:-8px -14px;
+    border-radius:10px;
+    background:rgba(57,65,78,.075);
+    opacity:0; z-index:0;
+  }
 
   /* ---- skeleton bars ---- */
   .bar{
@@ -105,12 +119,27 @@
 
   .slider{ width:132px; height:16px; position:relative; display:flex; align-items:center; }
   .slider .rail{ position:absolute; left:0; right:0; height:4px; border-radius:2px; background:var(--track); }
-  .slider .fill{ position:absolute; left:0; height:4px; border-radius:2px; background:var(--fill); width:58%; }
+  .slider .fill{ position:absolute; left:0; height:4px; border-radius:2px; background:var(--fill); width:34%; }
   .slider .grip{
-    position:absolute; left:calc(58% - 8px);
+    position:absolute; left:calc(34% - 8px);
     width:16px; height:16px; border-radius:50%;
     background:#fff; border:1px solid var(--chrome-line);
     box-shadow:0 1px 2px rgba(16,24,40,.2);
+  }
+
+  /* ---- the pointer and its click ring ---- */
+  #cursor{
+    position:absolute; left:0; top:0;
+    width:26px; height:36px;
+    z-index:40; opacity:0;
+    filter:drop-shadow(0 2px 4px rgba(16,24,40,.28));
+  }
+  .ring{
+    position:absolute; left:0; top:0;
+    width:26px; height:26px; margin:-13px 0 0 -13px;
+    border-radius:50%;
+    border:2px solid rgba(57,65,78,.5);
+    opacity:0; z-index:35;
   }
 </style>
 </head>
@@ -118,6 +147,12 @@
 <div id="stage">
   <div class="page" id="pageCopy" style="z-index:1"><div class="card"></div></div>
   <div class="page" id="pageOrig" style="z-index:2"><div class="card"></div></div>
+
+  <div class="ring" id="ring"></div>
+  <svg id="cursor" viewBox="0 0 17 23" aria-hidden="true">
+    <path d="M1 1 L1 20 L6 15.6 L9 22 L12.4 20.5 L9.5 14.3 L15.6 14 Z"
+          fill="#FFFFFF" stroke="#39414E" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
 </div>
 
 <script>
@@ -142,13 +177,13 @@
   const SECTIONS = [
     { head:.24, rows:[
       { w:.46, sub:.30, ctrl:'toggle-on' },
-      { w:.60,          ctrl:'toggle'    },
+      { w:.60,          ctrl:'toggle', mark:'a' },
       { w:.40, sub:.26, ctrl:'value'     },
     ]},
     { head:.28, rows:[
-      { w:.52,          ctrl:'select'    },
+      { w:.52,          ctrl:'select', mark:'b' },
       { w:.44, sub:.28, ctrl:'toggle-on' },
-      { w:.58,          ctrl:'slider'    },
+      { w:.58,          ctrl:'slider', mark:'c' },
     ]},
     { head:.22, rows:[
       { w:.48, sub:.30, ctrl:'toggle'    },
@@ -182,6 +217,9 @@
 
       sec.rows.forEach(r => {
         const row = el('row');
+        if (r.mark) row.dataset.mark = r.mark;
+        row.appendChild(el('glow'));
+
         const labels = el('labels');
         const label = el('bar label');
         label.style.width = (r.w * 100) + '%';
@@ -217,6 +255,8 @@
   buildPage(cardOrig);
   cardCopy.replaceWith(cardOrig.cloneNode(true));
   const cardCopy2 = pageCopy.firstElementChild;
+  const cursor    = document.getElementById('cursor');
+  const ring      = document.getElementById('ring');
 
   CARD_H = cardOrig.offsetHeight;
 
@@ -239,6 +279,64 @@
   const MID_C = frame(672, 990, MID_Y - 26);     // the copy, mid flight
   const MID_O = frame(684, 620, MID_Y + 10);     // the original, mid flight
 
+  // Where each page ends up, in stage coordinates.
+  const PAGE_Y  = MID_Y - CARD_H / 2;
+  const LEFT_X  = 450 - CARD_W / 2;
+  const RIGHT_X = 1150 - CARD_W / 2;
+
+  /* A control's place on the stage, worked out from layout offsets rather
+     than a measured rectangle: the pages are mid-flight and under a scale
+     when the timeline is built, but offsetLeft/offsetTop are layout values
+     and ignore transforms, so these land correctly whatever is moving. */
+  function offsetIn(node, ancestor){
+    let x = 0, y = 0, n = node;
+    while (n && n !== ancestor){ x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    return { x, y };
+  }
+  function seat(node, page, pageX){
+    const off = offsetIn(node, page);
+    return { x:pageX + off.x + node.offsetWidth / 2,
+             y:PAGE_Y + off.y + node.offsetHeight / 2 };
+  }
+
+  const rowOf  = (card, mark) => card.querySelector(`.row[data-mark="${mark}"]`);
+  const ctrlOf = (card, mark) => rowOf(card, mark).querySelector('.ctrls > *');
+
+  const PAGES = [
+    { page:pageOrig, card:cardOrig,  x:LEFT_X  },
+    { page:pageCopy, card:cardCopy2, x:RIGHT_X },
+  ];
+
+  /* ---------------- the three edits ----------------------------------- *
+   * Each knows how to play itself on a control, so the identical routine
+   * runs on the left page and then, a beat later, all over again on the
+   * right one. That repetition is the point of the slide.
+   * ------------------------------------------------------------------ */
+
+  const EDITS = {
+    a: (node, delay) => {                       // a switch comes on
+      animate(node, [{ background:'#E0E5EB' }, { background:'#BCC4CF' }],
+        { duration:300, delay, easing:'ease-out' });
+      animate(node.querySelector('.knob'), [{ left:'3px' }, { left:'23px' }],
+        { duration:300, delay, easing:'cubic-bezier(.4,1.4,.5,1)' });
+    },
+    b: (node, delay) => {                       // a different option is chosen
+      animate(node.querySelector('.pill'), [
+        { width:'58px', opacity:1 },
+        { width:'58px', opacity:.15, offset:.35 },
+        { width:'92px', opacity:.15, offset:.45 },
+        { width:'92px', opacity:1 }
+      ], { duration:480, delay, easing:'ease-in-out' });
+    },
+    c: (node, delay) => {                       // a slider is pushed up
+      animate(node.querySelector('.fill'), [{ width:'34%' }, { width:'72%' }],
+        { duration:480, delay, easing:'cubic-bezier(.3,.9,.35,1)' });
+      animate(node.querySelector('.grip'),
+        [{ left:'calc(34% - 8px)' }, { left:'calc(72% - 8px)' }],
+        { duration:480, delay, easing:'cubic-bezier(.3,.9,.35,1)' });
+    },
+  };
+
   const REST_SHADOW = '0 1px 2px rgba(16,24,40,.04), 0 18px 44px -14px rgba(16,24,40,.16)';
   const LIFT_SHADOW = '0 2px 4px rgba(16,24,40,.06), 0 38px 84px -20px rgba(16,24,40,.30)';
 
@@ -255,14 +353,31 @@
   const ORIG_AT   = COPY_AT + 100;
   const ORIG_DUR  = 700;
 
+  // the cursor's pass over each page
+  const EDIT_START   = 6500;   // once the two pages have settled
+  const TRAVEL       = 640;    // pointer between controls
+  const SETTLE       = 200;    // beat between arriving and clicking
+  const STEP         = 760;    // from one click to the next move
+  const SWITCH_PAUSE = 1500;   // the wait before starting the second page
+  const GLOW_IN      = 180;
+  const GLOW_HOLD    = 700;
+
   const EASE_LIFT = 'cubic-bezier(.3,.9,.4,1)';
   const EASE_DEAL = 'cubic-bezier(.5,.02,.25,1)';
+  const EASE_MOVE = 'cubic-bezier(.45,.05,.2,1)';
+
+  // Everything after the hold is stretched by this. Raise it to slow the
+  // whole sequence, lower it to tighten — the hold stays 5s either way.
+  const RATE = 1;
 
   const anims = [];
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function animate(node, frames, opts){
-    const a = node.animate(frames, Object.assign({ fill:'forwards' }, opts));
+    const o = Object.assign({ fill:'forwards' }, opts);
+    o.duration = (o.duration || 0) * RATE;
+    o.delay    = HOLD + ((o.delay || 0) - HOLD) * RATE;   // hold stays put
+    const a = node.animate(frames, o);
     anims.push(a);
     return a;
   }
@@ -276,11 +391,33 @@
     cardCopy2.style.transform = 'rotate(0deg)';
     cardOrig.style.boxShadow = REST_SHADOW;
     cardCopy2.style.boxShadow = REST_SHADOW;
+    cursor.style.opacity = 0;
+    ring.style.opacity = 0;
+
+    PAGES.forEach(({ card }) => {
+      card.querySelectorAll('.glow').forEach(g => { g.style.opacity = 0; });
+      const t = ctrlOf(card, 'a');
+      t.style.background = '#E0E5EB';
+      t.querySelector('.knob').style.left = '3px';
+      ctrlOf(card, 'b').querySelector('.pill').style.cssText = 'width:58px;opacity:1';
+      const sl = ctrlOf(card, 'c');
+      sl.querySelector('.fill').style.width = '34%';
+      sl.querySelector('.grip').style.left  = 'calc(34% - 8px)';
+    });
   }
 
   function snapToEnd(){
     pageOrig.style.transform = B1;
     pageCopy.style.transform = B2;
+    PAGES.forEach(({ card }) => {
+      const t = ctrlOf(card, 'a');
+      t.style.background = '#BCC4CF';
+      t.querySelector('.knob').style.left = '23px';
+      ctrlOf(card, 'b').querySelector('.pill').style.width = '92px';
+      const sl = ctrlOf(card, 'c');
+      sl.querySelector('.fill').style.width = '72%';
+      sl.querySelector('.grip').style.left  = 'calc(72% - 8px)';
+    });
   }
 
   function play(){
@@ -329,6 +466,56 @@
 
     animate(cardOrig, [{ boxShadow:LIFT_SHADOW }, { boxShadow:REST_SHADOW }],
       { duration:ORIG_DUR, delay:ORIG_AT, easing:EASE_DEAL });
+
+    /* beat 4 — the same three settings are configured by hand, first on one
+       page and then, after a pause, all over again on the other */
+
+    const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+    const START = { x:LEFT_X + 120, y:PAGE_Y + CARD_H + 100 };
+    const EXIT  = { x:RIGHT_X + 320, y:PAGE_Y + CARD_H + 130 };
+
+    cursor.style.transform = put(START);
+    animate(cursor, [{ opacity:0 }, { opacity:1 }],
+      { duration:280, delay:EDIT_START - 280, easing:'ease-out' });
+
+    let at = START, t = EDIT_START;
+
+    PAGES.forEach(({ page, card, x }, pageIndex) => {
+      if (pageIndex) t += SWITCH_PAUSE;          // the deliberate wait between pages
+
+      ['a','b','c'].forEach(mark => {
+        const node = ctrlOf(card, mark);
+        const to   = seat(node, page, x);
+
+        animate(cursor, [{ transform:put(at) }, { transform:put(to) }],
+          { duration:TRAVEL, delay:t, easing:EASE_MOVE });
+
+        const click = t + TRAVEL + SETTLE;
+
+        animate(cursor, [{ scale:1 }, { scale:.88, offset:.35 }, { scale:1 }],
+          { duration:280, delay:click, easing:'ease-out' });
+
+        animate(ring, [
+          { transform:put(to) + ' scale(.35)', opacity:.55 },
+          { transform:put(to) + ' scale(2.6)', opacity:0 }
+        ], { duration:560, delay:click, easing:'cubic-bezier(.2,.7,.3,1)' });
+
+        animate(rowOf(card, mark).querySelector('.glow'), [
+          { opacity:0 }, { opacity:1, offset:.18 },
+          { opacity:1, offset:.75 }, { opacity:0 }
+        ], { duration:GLOW_IN + GLOW_HOLD, delay:click, easing:'ease-in-out' });
+
+        EDITS[mark](node, click + 90);
+
+        at = to;
+        t  = click + STEP;
+      });
+    });
+
+    animate(cursor, [{ transform:put(at) }, { transform:put(EXIT) }],
+      { duration:760, delay:t + 240, easing:'cubic-bezier(.4,0,.7,1)' });
+    animate(cursor, [{ opacity:1 }, { opacity:0 }],
+      { duration:440, delay:t + 460, easing:'ease-in' });
   }
 
   /* ---------------- fit to screen + presenter controls ---------------- */
