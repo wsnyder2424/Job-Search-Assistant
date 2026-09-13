@@ -162,20 +162,22 @@
    * ------------------------------------------------------------------ */
 
   const OPTIONS = [
-    { key:'lollipop',     label:'Prospective pay lollipop', layer:'marker',            on:false },
-    { key:'overlap',      label:'Overlap',                  layer:'band-green',        on:false, info:true },
-    { key:'internal',     label:'Internal range',           layer:'band-grey',         on:true  },
-    { key:'equitable',    label:'Equitable pay range',      layer:'band-teal-500',     on:true  },
-    { key:'configurable', label:'Configurable range',       layer:'band-teal-400',     on:true  },
+    { key:'lollipop',     label:'Prospective pay lollipop', layer:'marker',            on:true },
+    { key:'overlap',      label:'Overlap',                  layer:'band-green',        on:true, info:true },
+    { key:'internal',     label:'Internal range',           layer:'band-grey',         on:true },
+    { key:'equitable',    label:'Equitable pay range',      layer:'band-teal-500',     on:true },
+    { key:'configurable', label:'Configurable range',       layer:'band-teal-400',     on:true },
     { key:'boxplot',      label:'Current employee boxplot', layer:'current-employees', on:true, info:true, wide:true },
   ];
 
-  // what the pointer does, in order
+  /* What the pointer does, in order. The three it switches off are scattered
+     rather than worked down the list, and it doubles back up before the last
+     one, so the pass reads as unplanned. Fixed rather than truly random, so
+     the slide plays the same way every time you present it. */
   const SCRIPT = [
-    { key:'lollipop',     to:true  },
-    { key:'overlap',      to:true  },
-    { key:'configurable', to:false },
-    { key:'internal',     to:false },
+    { key:'configurable', to:false },   // row 5
+    { key:'overlap',      to:false },   // back up to row 2
+    { key:'boxplot',      to:false },   // down to row 6
   ];
 
   const el = (cls, html) => {
@@ -222,7 +224,7 @@
   const TRACK_OFF = '#EDEDED', TRACK_ON = '#007B80';
   const EDGE_OFF  = '#C9C9C9', EDGE_ON  = '#007B80';
 
-  const RATE = 1;   // stretch everything after the hold without retiming it
+  const RATE = 3;   // everything after the hold runs at a third of the speed
 
   const anims = [];
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
