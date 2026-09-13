@@ -75,32 +75,34 @@
     filter:drop-shadow(0 2px 4px rgba(16,24,40,.28));
   }
 
-  /* ------------------------------------------------------------------ *
-   * PLACEHOLDER TOOLTIP. Everything about its look lives in this block
-   * and in buildTip() below — the timeline only fades and positions it,
-   * so dropping in the real design touches nothing else.
+  /* ---- the tooltip (from the PayFinder design) ---- *
+   * Set about 1.4x its native size so the body text sits as secondary to
+   * the 26px control labels rather than vanishing beside them.
    * ------------------------------------------------------------------ */
-  #tip{
+  .tip{
     position:absolute; left:0; top:0;
     z-index:45; opacity:0;
-    transform-origin:50% 100%;
   }
   .tip-body{
-    width:320px; box-sizing:border-box;
-    background:var(--text-primary);
-    border-radius:8px;
-    padding:16px 18px;
-    display:flex; flex-direction:column; gap:9px;
-    box-shadow:0 8px 20px -6px rgba(16,24,40,.35);
+    width:720px; box-sizing:border-box;
+    background:var(--white);
+    border:1px solid #E6E6E6;
+    border-radius:14px;
+    padding:42px;
+    box-shadow:0 6px 20px -4px rgba(16,24,40,.16);
   }
-  .tline{ height:10px; border-radius:5px; background:rgba(255,255,255,.62); }
-  .tline.dim{ background:rgba(255,255,255,.34); }
-  .tip-arrow{
-    position:absolute; left:50%; bottom:-6px; margin-left:-7px;
-    width:14px; height:14px; border-radius:2px;
-    background:var(--text-primary);
-    transform:rotate(45deg);
+  .tip-title{
+    font-size:22px; font-weight:600; line-height:30px;
+    letter-spacing:-.22px; color:var(--text-primary);
+    margin:0 0 10px;
   }
+  .tip-body p{
+    font-size:20px; line-height:30px; letter-spacing:-.2px;
+    color:var(--text-primary); margin:0;
+  }
+  .tip-body p + p{ margin-top:10px; }
+  .tip-figure{ margin:24px auto 0; display:block; }
+
 </style>
 </head>
 <body>
@@ -132,7 +134,6 @@
     </svg>
   </div>
 
-  <div id="tip"></div>
   <svg id="cursor" viewBox="0 0 17 23" aria-hidden="true">
     <path d="M1 1 L1 20 L6 15.6 L9 22 L12.4 20.5 L9.5 14.3 L15.6 14 Z"
           fill="#FFFFFF" stroke="#39414E" stroke-width="1.6" stroke-linejoin="round"/>
@@ -158,7 +159,8 @@
   ];
 
   // which markers the pointer visits, in order
-  const HOVERS = ['overlap', 'boxplot'];
+  // only Overlap — the copy for the boxplot marker hasn't been written yet
+  const HOVERS = ['overlap'];
 
   const el = (cls, html) => {
     const d = document.createElement('div');
@@ -183,23 +185,46 @@
   });
 
   /* ---------------- the tooltip -------------------------------------- *
-   * PLACEHOLDER. Replace the innards of buildTip with the real design;
-   * the timeline only asks for its size and then fades it in and out.
+   * Copy and figure as drawn in the PayFinder design. The little figure is
+   * a distribution of employees with the overlap band sitting over it.
    * ------------------------------------------------------------------ */
-  function buildTip(){
+
+  const TIPS = {
+    overlap: {
+      title: 'What\u2019s the overlap range?',
+      paras: [
+        'The intersecting \u201csweet spot\u201d between the internal range and the PayEQ prediction.',
+        'If a custom range is defined, this range will use the overlap between the custom range and the internal range. If no configuration is applied, the overlap will be between the internal range and the equitable pay range.',
+      ],
+    },
+  };
+
+  function figure(){
+    const ticks = [];
+    for (let i = 0; i < 9; i++){
+      const x = 8 + i * 14.5;
+      ticks.push(`<line x1="${x}" y1="6" x2="${x}" y2="60" stroke="#C9C9C9" stroke-width="1.5"/>`);
+    }
+    return `<svg class="tip-figure" width="134" height="64" viewBox="0 0 134 64" fill="none">
+      ${ticks.join('')}
+      <line x1="0" y1="60" x2="134" y2="60" stroke="#C9C9C9" stroke-width="1.5"/>
+      <rect x="44" y="22" width="46" height="24" rx="2" fill="#61A058"/>
+    </svg>`;
+  }
+
+  function buildTip(key){
+    const t = TIPS[key];
     return `
       <div class="tip-body">
-        <div class="tline" style="width:92%"></div>
-        <div class="tline" style="width:100%"></div>
-        <div class="tline dim" style="width:58%"></div>
-      </div>
-      <div class="tip-arrow"></div>`;
+        <p class="tip-title">${t.title}</p>
+        ${t.paras.map(x => `<p>${x}</p>`).join('')}
+        ${figure()}
+      </div>`;
   }
 
   const stage  = document.getElementById('stage');
   const cursor = document.getElementById('cursor');
-  const tip    = document.getElementById('tip');
-  tip.innerHTML = buildTip();
+
 
   /* ---------------- timeline ----------------------------------------- */
 
@@ -207,7 +232,7 @@
   const TRAVEL = 640;    // pointer between markers
   const SETTLE = 200;    // beat between arriving and the tooltip appearing
   const TIP_IN = 320;
-  const DWELL  = 2600;   // long enough to actually read it
+  const DWELL  = 5000;   // there is real copy to read here
   const TIP_OUT= 260;
   const GAP    = 260;    // between one marker and setting off for the next
 
@@ -236,11 +261,19 @@
   }
   const centre = n => { const b = box(n); return { x:b.x + b.w/2, y:b.y + b.h/2 }; };
 
+  function makeTip(key){
+    const t = document.createElement('div');
+    t.className = 'tip';
+    t.innerHTML = buildTip(key);
+    stage.appendChild(t);
+    return t;
+  }
+
   function reset(){
     anims.forEach(a => a.cancel());
     anims.length = 0;
+    document.querySelectorAll('.tip').forEach(t => t.remove());
     cursor.style.opacity = 0;
-    tip.style.opacity = 0;
     document.querySelectorAll('.info').forEach(i => {
       i.style.borderColor = '#666666';
       i.style.color = '#666666';
@@ -293,18 +326,29 @@
         { borderColor:'#2E2E2E', color:'#2E2E2E' }
       ], { duration:200, delay:over - 120, easing:'ease-out' });
 
-      // the tooltip, placed above the marker and pointing down at it
-      const tb = box(tip);
-      const pos = { x:to.x - tb.w/2, y:to.y - tb.h - 20 };
+      /* Place it above the marker if there is room, otherwise flip below —
+         this tooltip is tall enough that the upper marker has nowhere to put
+         it overhead. Then clamp it inside the slide and slide the arrow along
+         to keep it pointing at the marker. */
+      const tip = makeTip(key);
+      const tb  = box(tip);
+      const REACH = 32;                       // marker edge to tooltip edge
+      const flip  = to.y - REACH - tb.h < 24;
+      const y     = flip ? to.y + REACH : to.y - REACH - tb.h;
+      const x     = Math.max(40, Math.min(to.x - tb.w / 2, STAGE_W - 40 - tb.w));
+
+      tip.classList.toggle('below', flip);
+
+      const from = flip ? y - 8 : y + 8;      // it rises or drops into place
       animate(tip, [
-        { transform:`translate(${pos.x}px, ${pos.y + 6}px) scale(.97)`, opacity:0 },
-        { transform:`translate(${pos.x}px, ${pos.y}px) scale(1)`,       opacity:1 }
+        { transform:`translate(${x}px, ${from}px)`, opacity:0 },
+        { transform:`translate(${x}px, ${y}px)`,    opacity:1 }
       ], { duration:TIP_IN, delay:over, easing:TIP_SHOW });
 
       const leave = over + TIP_IN + DWELL;
       animate(tip, [
-        { transform:`translate(${pos.x}px, ${pos.y}px) scale(1)`, opacity:1 },
-        { transform:`translate(${pos.x}px, ${pos.y + 4}px) scale(.99)`, opacity:0 }
+        { transform:`translate(${x}px, ${y}px)`, opacity:1 },
+        { transform:`translate(${x}px, ${flip ? y - 5 : y + 5}px)`, opacity:0 }
       ], { duration:TIP_OUT, delay:leave, easing:TIP_HIDE });
 
       animate(marker, [
