@@ -27,13 +27,14 @@
 
   #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
 
-  /* the band of surfaces, wider than the slide, that travels across it */
-  #band{
-    position:absolute; top:0; left:0; height:900px;
-    display:flex; align-items:center; gap:56px;
-    padding:0 120px;
-    will-change:transform;
+  /* two rows, five over four, centred in the slide */
+  #grid{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:56px;
   }
+  .row{ display:flex; align-items:center; gap:28px; }
 
   .screen{
     flex:0 0 auto;
@@ -71,7 +72,12 @@
 </style>
 </head>
 <body>
-<div id="stage"><div id="band"></div></div>
+<div id="stage">
+  <div id="grid">
+    <div class="row" id="row1"></div>
+    <div class="row" id="row2"></div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -92,7 +98,7 @@
 
   const SURFACES = [
     // 1 — left nav rail, simple form rows
-    { w:430, h:310, html:`
+    { w:300, h:226, html:`
       <div class="rail" style="width:96px"><div class="pane col" style="gap:12px">
         ${bars(6, ['70%','55%','80%','48%','64%','58%'], 'sub')}
       </div></div>
@@ -102,7 +108,7 @@
       </div>` },
 
     // 2 — top tabs, two columns of fields
-    { w:480, h:290, html:`
+    { w:276, h:210, html:`
       <div class="col" style="flex:1">
         <div class="topbar pane" style="padding:12px 16px; display:flex; gap:14px; align-items:center">
           <div class="tab sel" style="width:44px"></div><div class="tab" style="width:38px"></div>
@@ -114,7 +120,7 @@
       </div>` },
 
     // 3 — a modal over a dimmed page
-    { w:400, h:330, html:`
+    { w:268, h:238, html:`
       <div class="col" style="flex:1; position:relative">
         <div class="pane col" style="gap:14px; flex:1">
           ${bars(7, ['62%','48%','70%','40%','58%','66%','44%'])}
@@ -132,7 +138,7 @@
       </div>` },
 
     // 4 — long list, inline toggles, no nav at all
-    { w:440, h:300, html:`
+    { w:264, h:214, html:`
       <div class="pane col" style="flex:1; gap:11px">
         <div class="bar head" style="width:30%; margin-bottom:4px"></div>
         ${['64%','52%','72%','46%','58%','68%','50%','62%'].map((w,i) =>
@@ -140,7 +146,7 @@
       </div>` },
 
     // 5 — grid of setting tiles
-    { w:500, h:320, html:`
+    { w:252, h:222, html:`
       <div class="pane col" style="flex:1; gap:14px">
         <div class="bar head" style="width:34%"></div>
         <div style="flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:1fr 1fr; gap:12px">
@@ -151,20 +157,20 @@
       </div>` },
 
     // 6 — a table with headers and per-row controls
-    { w:520, h:300, html:`
+    { w:348, h:240, html:`
       <div class="pane col" style="flex:1; gap:0">
         <div class="rowline" style="padding-bottom:10px; border-bottom:1px solid var(--chrome-line)">
           <div class="bar head" style="width:26%"></div><div class="bar head" style="width:18%"></div>
           <div class="bar head" style="width:14%"></div><div class="bar head" style="width:10%"></div>
         </div>
-        ${[1,2,3,4,5,6].map(() => `<div class="rowline" style="padding:11px 0; border-bottom:1px solid var(--chrome-line)">
+        ${[1,2,3,4].map(() => `<div class="rowline" style="padding:11px 0; border-bottom:1px solid var(--chrome-line)">
           <div class="bar" style="width:26%"></div><div class="bar sub" style="width:18%"></div>
           <div class="field" style="width:56px"></div><div class="toggle on"><i></i></div>
         </div>`).join('')}
       </div>` },
 
     // 7 — menu list on the left, detail pane on the right
-    { w:430, h:330, html:`
+    { w:342, h:246, html:`
       <div class="rail" style="width:132px"><div class="pane col" style="gap:10px">
         ${['80%','62%','74%','56%','68%','50%','72%'].map((w,i) =>
           `<div class="bar ${i===1?'':'sub'}" style="width:${w}"></div>`).join('')}
@@ -178,7 +184,7 @@
       </div>` },
 
     // 8 — accordion sections, one open
-    { w:450, h:310, html:`
+    { w:330, h:240, html:`
       <div class="pane col" style="flex:1; gap:10px">
         ${[0,1,2].map(i => `
           <div class="tile" style="padding:11px; display:flex; flex-direction:column; gap:${i===1?'10px':'0'}">
@@ -190,7 +196,7 @@
       </div>` },
 
     // 9 — a stepper, one column, progress along the top
-    { w:410, h:320, html:`
+    { w:368, h:238, html:`
       <div class="col" style="flex:1">
         <div class="topbar pane" style="padding:13px 16px; display:flex; align-items:center; gap:8px">
           ${[0,1,2,3].map(i => `<div class="bar ${i<2?'head':'sub'}" style="flex:1; height:6px"></div>`).join('')}
@@ -207,44 +213,19 @@
       </div>` },
   ];
 
-  const band = document.getElementById('band');
-  SURFACES.forEach(s => {
+  const row1 = document.getElementById('row1');
+  const row2 = document.getElementById('row2');
+
+  SURFACES.forEach((s, i) => {
     const screen = document.createElement('div');
     screen.className = 'screen';
     screen.style.width  = px(s.w);
     screen.style.height = px(s.h);
     screen.innerHTML = s.html;
-    band.appendChild(screen);
+    (i < 5 ? row1 : row2).appendChild(screen);
   });
 
-  /* ---------------- the traverse ------------------------------------- *
-   * One eased pass, not a linear crawl: it leans into the move and coasts
-   * to a stop, so the row arrives rather than simply stopping.
-   * ------------------------------------------------------------------ */
-
-  const HOLD  = 5000;
-  const DUR   = 7000;
-  const EASE  = 'cubic-bezier(.62,0,.30,1)';
-
-  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let anim = null;
-
-  function distance(){
-    return Math.max(0, band.scrollWidth - STAGE_W);
-  }
-
-  function play(){
-    if (anim) anim.cancel();
-    const d = distance();
-    band.style.transform = 'translateX(0px)';
-    if (REDUCED.matches){ band.style.transform = `translateX(${-d}px)`; return; }
-    anim = band.animate(
-      [{ transform:'translateX(0px)' }, { transform:`translateX(${-d}px)` }],
-      { duration:DUR, delay:HOLD, easing:EASE, fill:'forwards' }
-    );
-  }
-
-  /* ---------------- fit to screen + presenter controls ---------------- */
+  /* ---------------- fit to screen ------------------------------------ */
 
   const stage = document.getElementById('stage');
   function fit(){
@@ -255,13 +236,6 @@
   }
   window.addEventListener('resize', fit);
   fit();
-
-  window.addEventListener('click', play);
-  window.addEventListener('keydown', e => {
-    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
-  });
-
-  play();
 })();
 </script>
 </body>
