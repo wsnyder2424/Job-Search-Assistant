@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toggling the Pay Bands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>
+  :root{
+    --slide-bg:#FDFDFC;
+    /* PayFinder tokens, as named in Figma */
+    --white:#FFFFFF;
+    --text-primary:#2E2E2E;
+    --text-secondary:#666666;
+    --border-medium:#B0B0B0;
+    --border-lightest:#E7E7E7;
+    --teal-500:#007B80;
+    --teal-400:#30BCC0;
+    --green-500:#61A058;
+    --gray-600:#B0B0B0;
+    --ink:#39414E;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0;
+    overflow:hidden;
+    background:var(--slide-bg);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  /* 16:9 logical stage, scaled to fit whatever it is projected on */
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  /* ---- the settings card (Figma 853:2971) ---- */
+  .card{
+    position:absolute;
+    left:90px; top:262px;
+    width:633px;
+    box-sizing:border-box;
+    padding:32px;
+    background:var(--white);
+    border-bottom:1px solid var(--border-lightest);
+    border-radius:20px;
+    box-shadow:0 6px 5px rgba(0,0,0,.15), 0 2px 1.5px rgba(0,0,0,.3);
+  }
+  .options{ display:flex; flex-direction:column; gap:16px; width:569px; }
+
+  .option{ display:flex; align-items:center; gap:8px; }
+  .option.wide{ gap:12px; }
+  .option label{
+    font-size:14px; line-height:20px; letter-spacing:-.14px;
+    color:var(--text-primary); white-space:nowrap;
+  }
+
+  .toggle{
+    position:relative; flex:0 0 auto;
+    width:32px; height:16px; border-radius:8px;
+    background:#EDEDED;
+    border:1px solid #C9C9C9;
+    box-sizing:border-box;
+  }
+  .toggle .knob{
+    position:absolute; top:1px; left:1px;
+    width:12px; height:12px; border-radius:50%;
+    background:var(--white);
+    border:1px solid #C9C9C9;
+    box-sizing:border-box;
+  }
+  .toggle.on{ background:var(--teal-500); border-color:var(--teal-500); }
+  .toggle.on .knob{ left:17px; border-color:var(--teal-500); }
+
+  .info{
+    flex:0 0 auto;
+    width:15px; height:15px; border-radius:50%;
+    border:1px solid var(--text-secondary);
+    color:var(--text-secondary);
+    font-size:10px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .helper{
+    font-size:14px; line-height:20px; letter-spacing:-.14px;
+    color:#000; margin:0;
+  }
+  .field-label{
+    font-size:13px; line-height:20px; letter-spacing:-.13px;
+    color:var(--text-primary); margin-bottom:4px;
+  }
+  .field{
+    box-sizing:border-box;
+    background:var(--white);
+    border:1px solid var(--border-medium);
+    border-radius:3px;
+    padding:8px;
+    font-size:14px; line-height:20px; letter-spacing:-.14px;
+    color:var(--text-primary);
+  }
+
+  /* ---- the chart (Figma 10225:60542, rebuilt) ---- */
+  #chart{ position:absolute; left:822px; top:188px; }
+  #chart svg{ display:block; }
+  /* every toggle-controlled layer fades as a unit */
+  #chart [data-layer]{ opacity:1; }
+
+  /* ---- the pointer and its click ring ---- */
+  #cursor{
+    position:absolute; left:0; top:0;
+    width:26px; height:36px;
+    z-index:40; opacity:0;
+    filter:drop-shadow(0 2px 4px rgba(16,24,40,.28));
+  }
+  .ring{
+    position:absolute; left:0; top:0;
+    width:26px; height:26px; margin:-13px 0 0 -13px;
+    border-radius:50%;
+    border:2px solid rgba(0,123,128,.55);
+    opacity:0; z-index:35;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="card">
+    <div class="options" id="options"></div>
+    <p class="helper" style="margin-top:16px">If the employee cutoff is not reached the box plot will be hidden.</p>
+    <div style="margin-top:16px">
+      <div class="field-label">Minimum employee cutoff</div>
+      <div class="field">10</div>
+    </div>
+  </div>
+
+  <div id="chart">
+    <svg viewBox="0 0 313 238" width="688" height="523" fill="none"
+         role="img" aria-label="Pay band comparison">
+      <g id="band-green" data-layer>
+        <rect x="60" y="90" width="180" height="20" rx="4" fill="#61A058"/>
+      </g>
+
+      <g id="band-grey" data-layer>
+        <rect x="60" y="120" width="240" height="20" rx="4" fill="#B0B0B0"/>
+        <line x1="180" y1="120" x2="180" y2="140" stroke="#2E2E2E" stroke-width="1"/>
+      </g>
+
+      <g id="band-teal-500" data-layer>
+        <rect x="0" y="150" width="240" height="20" rx="4" fill="#007B80"/>
+      </g>
+
+      <g id="band-teal-400" data-layer>
+        <rect x="60" y="180" width="240" height="20" rx="4" fill="#30BCC0"/>
+      </g>
+
+      <g id="current-employees" data-layer stroke="#007B80" stroke-width="1">
+        <line x1="47"  y1="220" x2="102" y2="220"/>
+        <line x1="237" y1="220" x2="312" y2="220"/>
+        <line x1="47"  y1="210" x2="47"  y2="230"/>
+        <line x1="312" y1="210" x2="312" y2="230"/>
+        <rect x="101" y="210" width="137" height="20" rx="4" fill="#FFFFFF"/>
+        <line x1="170" y1="210" x2="170" y2="230"/>
+      </g>
+
+      <g id="marker" data-layer stroke="#2E2E2E" stroke-width="1">
+        <line x1="140" y1="79" x2="140" y2="238"/>
+        <circle cx="140" cy="40" r="39.5" fill="#FFFFFF"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="ring" id="ring"></div>
+  <svg id="cursor" viewBox="0 0 17 23" aria-hidden="true">
+    <path d="M1 1 L1 20 L6 15.6 L9 22 L12.4 20.5 L9.5 14.3 L15.6 14 Z"
+          fill="#FFFFFF" stroke="#39414E" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  /* ------------------------------------------------------------------ *
+   * Each toggle owns one layer of the chart. The order matches the
+   * chart's own stacking, top to bottom, which is how the card reads.
+   * ------------------------------------------------------------------ */
+
+  const OPTIONS = [
+    { key:'lollipop',     label:'Prospective pay lollipop', layer:'marker',            on:false },
+    { key:'overlap',      label:'Overlap',                  layer:'band-green',        on:false, info:true },
+    { key:'internal',     label:'Internal range',           layer:'band-grey',         on:true  },
+    { key:'equitable',    label:'Equitable pay range',      layer:'band-teal-500',     on:true  },
+    { key:'configurable', label:'Configurable range',       layer:'band-teal-400',     on:true  },
+    { key:'boxplot',      label:'Current employee boxplot', layer:'current-employees', on:true, info:true, wide:true },
+  ];
+
+  // what the pointer does, in order
+  const SCRIPT = [
+    { key:'lollipop',     to:true  },
+    { key:'overlap',      to:true  },
+    { key:'configurable', to:false },
+    { key:'internal',     to:false },
+  ];
+
+  const el = (cls, html) => {
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    if (html !== undefined) d.innerHTML = html;
+    return d;
+  };
+
+  const options = document.getElementById('options');
+  const byKey = {};
+
+  OPTIONS.forEach(o => {
+    const row = el('option' + (o.wide ? ' wide' : ''));
+    const toggle = el('toggle' + (o.on ? ' on' : ''), '<div class="knob"></div>');
+    const label = document.createElement('label');
+    label.textContent = o.label;
+    row.appendChild(toggle);
+    row.appendChild(label);
+    if (o.info) row.appendChild(el('info', '?'));
+    options.appendChild(row);
+
+    byKey[o.key] = { conf:o, toggle, layer:document.getElementById(o.layer) };
+  });
+
+  const stage  = document.getElementById('stage');
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('ring');
+
+  /* ---------------- timeline ------------------------------------------ */
+
+  const HOLD    = 5000;   // sit on the slide this long before moving
+  const TRAVEL  = 640;    // pointer between toggles
+  const SETTLE  = 200;    // beat between arriving and pressing
+  const STEP    = 900;    // click to next move — the chart needs time to read
+  const SWITCH  = 300;    // the toggle's own throw
+  const FADE    = 460;    // the chart layer appearing or leaving
+
+  // the bezier the chart fades on
+  const FADE_IN   = 'cubic-bezier(.22,.85,.35,1)';
+  const FADE_OUT  = 'cubic-bezier(.55,0,.78,.25)';
+  const EASE_MOVE = 'cubic-bezier(.45,.05,.2,1)';
+
+  const TRACK_OFF = '#EDEDED', TRACK_ON = '#007B80';
+  const EDGE_OFF  = '#C9C9C9', EDGE_ON  = '#007B80';
+
+  const RATE = 1;   // stretch everything after the hold without retiming it
+
+  const anims = [];
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function animate(node, frames, opts){
+    const o = Object.assign({ fill:'forwards' }, opts);
+    o.duration = (o.duration || 0) * RATE;
+    o.delay    = HOLD + ((o.delay || 0) - HOLD) * RATE;
+    const a = node.animate(frames, o);
+    anims.push(a);
+    return a;
+  }
+
+  let SCALE = 1;
+  function centre(node){
+    const r = node.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    return { x:(r.left - s.left) / SCALE + (r.width  / SCALE) / 2,
+             y:(r.top  - s.top ) / SCALE + (r.height / SCALE) / 2 };
+  }
+
+  function setToggle(node, on){
+    node.classList.toggle('on', on);
+    node.style.background  = on ? TRACK_ON : TRACK_OFF;
+    node.style.borderColor = on ? EDGE_ON  : EDGE_OFF;
+    const k = node.querySelector('.knob');
+    k.style.left = on ? '17px' : '1px';
+    k.style.borderColor = on ? EDGE_ON : EDGE_OFF;
+  }
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+    cursor.style.opacity = 0;
+    ring.style.opacity = 0;
+    OPTIONS.forEach(o => {
+      const t = byKey[o.key];
+      setToggle(t.toggle, o.on);
+      t.layer.style.opacity = o.on ? 1 : 0;
+    });
+  }
+
+  function snapToEnd(){
+    reset();
+    SCRIPT.forEach(step => {
+      const t = byKey[step.key];
+      setToggle(t.toggle, step.to);
+      t.layer.style.opacity = step.to ? 1 : 0;
+    });
+  }
+
+  function play(){
+    reset();
+    if (REDUCED.matches){ snapToEnd(); return; }
+
+    const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+    const card  = document.querySelector('.card');
+    const START = { x:120, y:820 };
+    const EXIT  = { x:170, y:880 };
+
+    cursor.style.transform = put(START);
+    animate(cursor, [{ opacity:0 }, { opacity:1 }],
+      { duration:280, delay:HOLD, easing:'ease-out' });
+
+    let at = START, t = HOLD;
+
+    SCRIPT.forEach(step => {
+      const { toggle, layer } = byKey[step.key];
+      const to = centre(toggle);
+
+      animate(cursor, [{ transform:put(at) }, { transform:put(to) }],
+        { duration:TRAVEL, delay:t, easing:EASE_MOVE });
+
+      const click = t + TRAVEL + SETTLE;
+
+      animate(cursor, [{ scale:1 }, { scale:.88, offset:.35 }, { scale:1 }],
+        { duration:280, delay:click, easing:'ease-out' });
+
+      animate(ring, [
+        { transform:put(to) + ' scale(.35)', opacity:.6 },
+        { transform:put(to) + ' scale(2.6)', opacity:0 }
+      ], { duration:560, delay:click, easing:'cubic-bezier(.2,.7,.3,1)' });
+
+      // the switch throws
+      animate(toggle, [
+        { background:step.to ? TRACK_OFF : TRACK_ON, borderColor:step.to ? EDGE_OFF : EDGE_ON },
+        { background:step.to ? TRACK_ON : TRACK_OFF, borderColor:step.to ? EDGE_ON : EDGE_OFF }
+      ], { duration:SWITCH, delay:click, easing:'ease-out' });
+
+      // the knob's ring travels with it, or an off switch keeps a teal edge
+      animate(toggle.querySelector('.knob'), [
+        { left:step.to ? '1px'  : '17px', borderColor:step.to ? EDGE_OFF : EDGE_ON  },
+        { left:step.to ? '17px' : '1px',  borderColor:step.to ? EDGE_ON  : EDGE_OFF }
+      ], { duration:SWITCH, delay:click, easing:'cubic-bezier(.4,1.4,.5,1)' });
+
+      // and its band fades in or out — the row it occupied stays empty
+      animate(layer, [{ opacity:step.to ? 0 : 1 }, { opacity:step.to ? 1 : 0 }],
+        { duration:FADE, delay:click + 120, easing:step.to ? FADE_IN : FADE_OUT });
+
+      at = to;
+      t  = click + STEP;
+    });
+
+    animate(cursor, [{ transform:put(at) }, { transform:put(EXIT) }],
+      { duration:760, delay:t + 240, easing:'cubic-bezier(.4,0,.7,1)' });
+    animate(cursor, [{ opacity:1 }, { opacity:0 }],
+      { duration:440, delay:t + 460, easing:'ease-in' });
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  function fit(){
+    SCALE = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${SCALE})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * SCALE) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * SCALE) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // Click anywhere, or press space / R, to replay.
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
