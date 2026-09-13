@@ -19,6 +19,7 @@
     --chrome-line:#DDE2E9;
     --fill:#C4CCD6;
     --ink:#39414E;
+    --title:#333B47;
   }
 
   html,body{height:100%;}
@@ -50,6 +51,15 @@
     transform-origin:50% 50%;
     padding:34px;
     display:flex; flex-direction:column;
+  }
+
+  /* the page's name, in the same treatment as slide 3 */
+  .title{
+    font-size:19px;
+    font-weight:600;
+    letter-spacing:-.01em;
+    color:var(--title);
+    margin-bottom:24px;
   }
 
   /* ---- structure ---- */
@@ -175,7 +185,7 @@
    * ------------------------------------------------------------------ */
 
   const SECTIONS = [
-    { head:.24, rows:[
+    { rows:[
       { w:.46, sub:.30, ctrl:'toggle-on' },
       { w:.60,          ctrl:'toggle', mark:'a' },
       { w:.40, sub:.26, ctrl:'value'     },
@@ -208,12 +218,18 @@
                     '<div class="rail"></div><div class="fill"></div><div class="grip"></div>'),
   };
 
-  function buildPage(into){
+  function buildPage(into, title){
+    const heading = el('title');
+    heading.textContent = title;
+    into.appendChild(heading);
+
     SECTIONS.forEach(sec => {
       const section = el('section');
-      const head = el('bar head');
-      head.style.width = (sec.head * 100) + '%';
-      section.appendChild(head);
+      if (sec.head){
+        const head = el('bar head');
+        head.style.width = (sec.head * 100) + '%';
+        section.appendChild(head);
+      }
 
       sec.rows.forEach(r => {
         const row = el('row');
@@ -252,11 +268,13 @@
   const cardOrig = pageOrig.firstElementChild;
   const cardCopy = pageCopy.firstElementChild;
 
-  buildPage(cardOrig);
+  buildPage(cardOrig, 'Default view');
   cardCopy.replaceWith(cardOrig.cloneNode(true));
   const cardCopy2 = pageCopy.firstElementChild;
   const cursor    = document.getElementById('cursor');
   const ring      = document.getElementById('ring');
+
+  cardCopy2.querySelector('.title').textContent = 'Recruiter view';
 
   CARD_H = cardOrig.offsetHeight;
 
