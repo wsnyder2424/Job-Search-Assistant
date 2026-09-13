@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pay Band Tooltips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>
+  :root{
+    --slide-bg:#FDFDFC;
+    /* PayFinder tokens, as named in Figma */
+    --white:#FFFFFF;
+    --text-primary:#2E2E2E;
+    --text-secondary:#666666;
+    --border-medium:#B0B0B0;
+    --teal-500:#007B80;
+    --teal-400:#30BCC0;
+    --green-500:#61A058;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0; overflow:hidden;
+    background:var(--slide-bg);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  .card{ position:absolute; left:122px; top:275px; width:569px; }
+  .options{ display:flex; flex-direction:column; gap:28px; width:569px; }
+
+  .option{ display:flex; align-items:center; gap:14px; }
+  .option label{
+    font-size:26px; line-height:35px; letter-spacing:-.26px;
+    color:var(--text-primary); white-space:nowrap;
+  }
+
+  .toggle{
+    position:relative; flex:0 0 auto;
+    width:61px; height:35px; border-radius:18px;
+    background:#EDEDED; border:1px solid #C9C9C9;
+    box-sizing:border-box;
+  }
+  .toggle .knob{
+    position:absolute; top:3px; left:3px;
+    width:27px; height:27px; border-radius:50%;
+    background:var(--white); border:1px solid #C9C9C9;
+    box-sizing:border-box;
+    box-shadow:0 1px 2px rgba(16,24,40,.18);
+  }
+  .toggle.on{ background:var(--teal-500); border-color:var(--teal-500); }
+  .toggle.on .knob{ left:29px; border-color:var(--teal-500); }
+
+  .info{
+    flex:0 0 auto;
+    width:28px; height:28px; border-radius:50%;
+    border:2px solid var(--text-secondary);
+    color:var(--text-secondary);
+    font-size:18px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---- the chart (Figma 10225:60542, rebuilt) — static here ---- */
+  #chart{ position:absolute; left:822px; top:188px; }
+  #chart svg{ display:block; }
+
+  /* ---- the pointer ---- */
+  #cursor{
+    position:absolute; left:0; top:0;
+    width:26px; height:36px;
+    z-index:40; opacity:0;
+    filter:drop-shadow(0 2px 4px rgba(16,24,40,.28));
+  }
+
+  /* ------------------------------------------------------------------ *
+   * PLACEHOLDER TOOLTIP. Everything about its look lives in this block
+   * and in buildTip() below — the timeline only fades and positions it,
+   * so dropping in the real design touches nothing else.
+   * ------------------------------------------------------------------ */
+  #tip{
+    position:absolute; left:0; top:0;
+    z-index:45; opacity:0;
+    transform-origin:50% 100%;
+  }
+  .tip-body{
+    width:320px; box-sizing:border-box;
+    background:var(--text-primary);
+    border-radius:8px;
+    padding:16px 18px;
+    display:flex; flex-direction:column; gap:9px;
+    box-shadow:0 8px 20px -6px rgba(16,24,40,.35);
+  }
+  .tline{ height:10px; border-radius:5px; background:rgba(255,255,255,.62); }
+  .tline.dim{ background:rgba(255,255,255,.34); }
+  .tip-arrow{
+    position:absolute; left:50%; bottom:-6px; margin-left:-7px;
+    width:14px; height:14px; border-radius:2px;
+    background:var(--text-primary);
+    transform:rotate(45deg);
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="card"><div class="options" id="options"></div></div>
+
+  <div id="chart">
+    <svg viewBox="0 0 313 238" width="688" height="523" fill="none"
+         role="img" aria-label="Pay band comparison">
+      <g id="band-green"><rect x="60" y="90" width="180" height="20" rx="4" fill="#61A058"/></g>
+      <g id="band-grey">
+        <rect x="60" y="120" width="240" height="20" rx="4" fill="#B0B0B0"/>
+        <line x1="180" y1="120" x2="180" y2="140" stroke="#2E2E2E" stroke-width="1"/>
+      </g>
+      <g id="band-teal-500"><rect x="0" y="150" width="240" height="20" rx="4" fill="#007B80"/></g>
+      <g id="band-teal-400"><rect x="60" y="180" width="240" height="20" rx="4" fill="#30BCC0"/></g>
+      <g id="current-employees" stroke="#007B80" stroke-width="1">
+        <line x1="47"  y1="220" x2="102" y2="220"/>
+        <line x1="237" y1="220" x2="312" y2="220"/>
+        <line x1="47"  y1="210" x2="47"  y2="230"/>
+        <line x1="312" y1="210" x2="312" y2="230"/>
+        <rect x="101" y="210" width="137" height="20" rx="4" fill="#FFFFFF"/>
+        <line x1="170" y1="210" x2="170" y2="230"/>
+      </g>
+      <g id="marker" stroke="#2E2E2E" stroke-width="1">
+        <line x1="140" y1="79" x2="140" y2="238"/>
+        <circle cx="140" cy="40" r="39.5" fill="#FFFFFF"/>
+      </g>
+    </svg>
+  </div>
+
+  <div id="tip"></div>
+  <svg id="cursor" viewBox="0 0 17 23" aria-hidden="true">
+    <path d="M1 1 L1 20 L6 15.6 L9 22 L12.4 20.5 L9.5 14.3 L15.6 14 Z"
+          fill="#FFFFFF" stroke="#39414E" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  /* Same six settings as the toggling slide. Here the switches are inert —
+     nothing the pointer does changes the chart. The two rows that carry an
+     info marker are the two that carry one in the Figma card. */
+  const OPTIONS = [
+    { key:'lollipop',     label:'Prospective pay lollipop', on:true },
+    { key:'overlap',      label:'Overlap',                  on:true, info:true },
+    { key:'internal',     label:'Internal range',           on:true },
+    { key:'equitable',    label:'Equitable pay range',      on:true },
+    { key:'configurable', label:'Configurable range',       on:true },
+    { key:'boxplot',      label:'Current employee boxplot', on:true, info:true },
+  ];
+
+  // which markers the pointer visits, in order
+  const HOVERS = ['overlap', 'boxplot'];
+
+  const el = (cls, html) => {
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    if (html !== undefined) d.innerHTML = html;
+    return d;
+  };
+
+  const options = document.getElementById('options');
+  const byKey = {};
+
+  OPTIONS.forEach(o => {
+    const row = el('option');
+    row.appendChild(el('toggle' + (o.on ? ' on' : ''), '<div class="knob"></div>'));
+    const label = document.createElement('label');
+    label.textContent = o.label;
+    row.appendChild(label);
+    let info = null;
+    if (o.info){ info = el('info', '?'); row.appendChild(info); }
+    options.appendChild(row);
+    byKey[o.key] = { conf:o, info };
+  });
+
+  /* ---------------- the tooltip -------------------------------------- *
+   * PLACEHOLDER. Replace the innards of buildTip with the real design;
+   * the timeline only asks for its size and then fades it in and out.
+   * ------------------------------------------------------------------ */
+  function buildTip(){
+    return `
+      <div class="tip-body">
+        <div class="tline" style="width:92%"></div>
+        <div class="tline" style="width:100%"></div>
+        <div class="tline dim" style="width:58%"></div>
+      </div>
+      <div class="tip-arrow"></div>`;
+  }
+
+  const stage  = document.getElementById('stage');
+  const cursor = document.getElementById('cursor');
+  const tip    = document.getElementById('tip');
+  tip.innerHTML = buildTip();
+
+  /* ---------------- timeline ----------------------------------------- */
+
+  const HOLD   = 5000;   // sit on the slide this long before moving
+  const TRAVEL = 640;    // pointer between markers
+  const SETTLE = 200;    // beat between arriving and the tooltip appearing
+  const TIP_IN = 320;
+  const DWELL  = 2600;   // long enough to actually read it
+  const TIP_OUT= 260;
+  const GAP    = 260;    // between one marker and setting off for the next
+
+  const EASE_MOVE = 'cubic-bezier(.45,.05,.2,1)';
+  const TIP_SHOW  = 'cubic-bezier(.22,.85,.35,1)';
+  const TIP_HIDE  = 'cubic-bezier(.55,0,.78,.25)';
+
+  const RATE = 1;
+  const anims = [];
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function animate(node, frames, opts){
+    const o = Object.assign({ fill:'forwards' }, opts);
+    o.duration = (o.duration || 0) * RATE;
+    o.delay    = HOLD + ((o.delay || 0) - HOLD) * RATE;
+    const a = node.animate(frames, o);
+    anims.push(a);
+    return a;
+  }
+
+  let SCALE = 1;
+  function box(node){
+    const r = node.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    return { x:(r.left - s.left)/SCALE, y:(r.top - s.top)/SCALE,
+             w:r.width/SCALE, h:r.height/SCALE };
+  }
+  const centre = n => { const b = box(n); return { x:b.x + b.w/2, y:b.y + b.h/2 }; };
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+    cursor.style.opacity = 0;
+    tip.style.opacity = 0;
+    document.querySelectorAll('.info').forEach(i => {
+      i.style.borderColor = '#666666';
+      i.style.color = '#666666';
+    });
+  }
+
+  function play(){
+    reset();
+
+    const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+
+    // the pointer travels a curved path, as on the toggling slide
+    const arc = (from, to) => {
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const amt = -Math.min(70, len * 0.22);
+      const cx = (from.x + to.x)/2 + (-dy/len) * amt;
+      const cy = (from.y + to.y)/2 + ( dx/len) * amt;
+      const N = 14, frames = [];
+      for (let i = 0; i <= N; i++){
+        const t = i/N, u = 1 - t;
+        frames.push({ transform:put({ x:u*u*from.x + 2*u*t*cx + t*t*to.x,
+                                      y:u*u*from.y + 2*u*t*cy + t*t*to.y }), offset:t });
+      }
+      return frames;
+    };
+
+    const START = { x:150, y:800 };
+    const EXIT  = { x:200, y:860 };
+    cursor.style.transform = put(START);
+
+    if (REDUCED.matches) return;   // hold the slide still
+
+    animate(cursor, [{ opacity:0 }, { opacity:1 }],
+      { duration:280, delay:HOLD, easing:'ease-out' });
+
+    let at = START, t = HOLD;
+
+    HOVERS.forEach(key => {
+      const marker = byKey[key].info;
+      const to = centre(marker);
+
+      animate(cursor, arc(at, to), { duration:TRAVEL, delay:t, easing:EASE_MOVE });
+
+      const over = t + TRAVEL + SETTLE;
+
+      // the marker acknowledges the pointer
+      animate(marker, [
+        { borderColor:'#666666', color:'#666666' },
+        { borderColor:'#2E2E2E', color:'#2E2E2E' }
+      ], { duration:200, delay:over - 120, easing:'ease-out' });
+
+      // the tooltip, placed above the marker and pointing down at it
+      const tb = box(tip);
+      const pos = { x:to.x - tb.w/2, y:to.y - tb.h - 20 };
+      animate(tip, [
+        { transform:`translate(${pos.x}px, ${pos.y + 6}px) scale(.97)`, opacity:0 },
+        { transform:`translate(${pos.x}px, ${pos.y}px) scale(1)`,       opacity:1 }
+      ], { duration:TIP_IN, delay:over, easing:TIP_SHOW });
+
+      const leave = over + TIP_IN + DWELL;
+      animate(tip, [
+        { transform:`translate(${pos.x}px, ${pos.y}px) scale(1)`, opacity:1 },
+        { transform:`translate(${pos.x}px, ${pos.y + 4}px) scale(.99)`, opacity:0 }
+      ], { duration:TIP_OUT, delay:leave, easing:TIP_HIDE });
+
+      animate(marker, [
+        { borderColor:'#2E2E2E', color:'#2E2E2E' },
+        { borderColor:'#666666', color:'#666666' }
+      ], { duration:200, delay:leave, easing:'ease-in' });
+
+      at = to;
+      t  = leave + TIP_OUT + GAP;
+    });
+
+    animate(cursor, arc(at, EXIT), { duration:760, delay:t, easing:'cubic-bezier(.4,0,.7,1)' });
+    animate(cursor, [{ opacity:1 }, { opacity:0 }],
+      { duration:440, delay:t + 220, easing:'ease-in' });
+  }
+
+  /* ---------------- fit to screen + presenter controls ---------------- */
+
+  function fit(){
+    SCALE = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${SCALE})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * SCALE) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * SCALE) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
