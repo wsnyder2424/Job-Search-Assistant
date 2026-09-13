@@ -152,15 +152,15 @@
   const OPTIONS = [
     { key:'lollipop',     label:'Prospective pay lollipop', on:true },
     { key:'overlap',      label:'Overlap',                  on:true, info:true },
-    { key:'internal',     label:'Internal range',           on:true },
+    { key:'internal',     label:'Internal range',           on:true, info:true },
     { key:'equitable',    label:'Equitable pay range',      on:true },
     { key:'configurable', label:'Configurable range',       on:true },
     { key:'boxplot',      label:'Current employee boxplot', on:true, info:true },
   ];
 
   // which markers the pointer visits, in order
-  // only Overlap — the copy for the boxplot marker hasn't been written yet
-  const HOVERS = ['overlap'];
+  // in reading order; the boxplot marker's copy hasn't been written yet
+  const HOVERS = ['overlap', 'internal'];
 
   const el = (cls, html) => {
     const d = document.createElement('div');
@@ -196,10 +196,18 @@
         'The intersecting \u201csweet spot\u201d between the internal range and the PayEQ prediction.',
         'If a custom range is defined, this range will use the overlap between the custom range and the internal range. If no configuration is applied, the overlap will be between the internal range and the equitable pay range.',
       ],
+      band: { fill:'#61A058', x:44, w:46 },     // the overlap sits narrow
+    },
+    internal: {
+      title: 'What\u2019s the internal range?',
+      paras: [
+        'The market-informed range of compensation established by your organization to pay employees performing the selected job.',
+      ],
+      band: { fill:'#B0B0B0', x:24, w:88 },     // the internal range runs wide
     },
   };
 
-  function figure(){
+  function figure(band){
     const ticks = [];
     for (let i = 0; i < 9; i++){
       const x = 8 + i * 14.5;
@@ -208,7 +216,7 @@
     return `<svg class="tip-figure" width="134" height="64" viewBox="0 0 134 64" fill="none">
       ${ticks.join('')}
       <line x1="0" y1="60" x2="134" y2="60" stroke="#C9C9C9" stroke-width="1.5"/>
-      <rect x="44" y="22" width="46" height="24" rx="2" fill="#61A058"/>
+      <rect x="${band.x}" y="22" width="${band.w}" height="24" rx="2" fill="${band.fill}"/>
     </svg>`;
   }
 
@@ -218,7 +226,7 @@
       <div class="tip-body">
         <p class="tip-title">${t.title}</p>
         ${t.paras.map(x => `<p>${x}</p>`).join('')}
-        ${figure()}
+        ${figure(t.band)}
       </div>`;
   }
 
@@ -232,7 +240,7 @@
   const TRAVEL = 640;    // pointer between markers
   const SETTLE = 200;    // beat between arriving and the tooltip appearing
   const TIP_IN = 320;
-  const DWELL  = 5000;   // there is real copy to read here
+  const DWELL  = 4200;   // there is real copy to read here
   const TIP_OUT= 260;
   const GAP    = 260;    // between one marker and setting off for the next
 
