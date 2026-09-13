@@ -39,7 +39,7 @@
      at the same place its content occupied. */
   .card{
     position:absolute;
-    left:122px; top:294px;
+    left:122px; top:332px;   /* the six rows, centred against the chart */
     width:569px;
   }
   .options{ display:flex; flex-direction:column; gap:16px; width:569px; }
@@ -79,24 +79,6 @@
     display:flex; align-items:center; justify-content:center;
   }
 
-  .helper{
-    font-size:14px; line-height:20px; letter-spacing:-.14px;
-    color:#000; margin:0;
-  }
-  .field-label{
-    font-size:13px; line-height:20px; letter-spacing:-.13px;
-    color:var(--text-primary); margin-bottom:4px;
-  }
-  .field{
-    box-sizing:border-box;
-    background:var(--white);
-    border:1px solid var(--border-medium);
-    border-radius:3px;
-    padding:8px;
-    font-size:14px; line-height:20px; letter-spacing:-.14px;
-    color:var(--text-primary);
-  }
-
   /* ---- the chart (Figma 10225:60542, rebuilt) ---- */
   #chart{ position:absolute; left:822px; top:188px; }
   #chart svg{ display:block; }
@@ -123,11 +105,6 @@
 <div id="stage">
   <div class="card">
     <div class="options" id="options"></div>
-    <p class="helper" style="margin-top:16px">If the employee cutoff is not reached the box plot will be hidden.</p>
-    <div style="margin-top:16px">
-      <div class="field-label">Minimum employee cutoff</div>
-      <div class="field">10</div>
-    </div>
   </div>
 
   <div id="chart">
