@@ -45,7 +45,6 @@
   .options{ display:flex; flex-direction:column; gap:28px; width:569px; }
 
   .option{ display:flex; align-items:center; gap:14px; }
-  .option.wide{ gap:20px; }
   .option label{
     font-size:26px; line-height:35px; letter-spacing:-.26px;
     color:var(--text-primary); white-space:nowrap;
@@ -69,15 +68,6 @@
   }
   .toggle.on{ background:var(--teal-500); border-color:var(--teal-500); }
   .toggle.on .knob{ left:29px; border-color:var(--teal-500); }
-
-  .info{
-    flex:0 0 auto;
-    width:28px; height:28px; border-radius:50%;
-    border:2px solid var(--text-secondary);
-    color:var(--text-secondary);
-    font-size:18px; line-height:1;
-    display:flex; align-items:center; justify-content:center;
-  }
 
   /* ---- the chart (Figma 10225:60542, rebuilt) ---- */
   #chart{ position:absolute; left:822px; top:188px; }
@@ -163,11 +153,11 @@
 
   const OPTIONS = [
     { key:'lollipop',     label:'Prospective pay lollipop', layer:'marker',            on:true },
-    { key:'overlap',      label:'Overlap',                  layer:'band-green',        on:true, info:true },
+    { key:'overlap',      label:'Overlap',                  layer:'band-green',        on:true },
     { key:'internal',     label:'Internal range',           layer:'band-grey',         on:true },
     { key:'equitable',    label:'Equitable pay range',      layer:'band-teal-500',     on:true },
     { key:'configurable', label:'Configurable range',       layer:'band-teal-400',     on:true },
-    { key:'boxplot',      label:'Current employee boxplot', layer:'current-employees', on:true, info:true, wide:true },
+    { key:'boxplot',      label:'Current employee boxplot', layer:'current-employees', on:true },
   ];
 
   /* What the pointer does, in order. The three it switches off are scattered
@@ -191,13 +181,12 @@
   const byKey = {};
 
   OPTIONS.forEach(o => {
-    const row = el('option' + (o.wide ? ' wide' : ''));
+    const row = el('option');
     const toggle = el('toggle' + (o.on ? ' on' : ''), '<div class="knob"></div>');
     const label = document.createElement('label');
     label.textContent = o.label;
     row.appendChild(toggle);
     row.appendChild(label);
-    if (o.info) row.appendChild(el('info', '?'));
     options.appendChild(row);
 
     byKey[o.key] = { conf:o, toggle, layer:document.getElementById(o.layer) };
