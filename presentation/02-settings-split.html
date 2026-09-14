@@ -364,7 +364,7 @@
    * beat 3  both come to rest, identical
    * -------------------------------------------------------------------- */
 
-  const HOLD      = 5000;  // sit on the single page this long before moving
+  const HOLD      = 18000; // sit on the single page this long before moving
   const LIFT_DUR  = 420;
   const COPY_AT   = HOLD + LIFT_DUR + 40;
   const COPY_DUR  = 760;
@@ -372,7 +372,7 @@
   const ORIG_DUR  = 700;
 
   // the cursor's pass over each page
-  const EDIT_START   = 6500;   // once the two pages have settled
+  const EDIT_START   = HOLD + 1500;  // once the two pages have settled
   const TRAVEL       = 640;    // pointer between controls
   const SETTLE       = 200;    // beat between arriving and clicking
   const STEP         = 760;    // from one click to the next move
@@ -385,7 +385,7 @@
   const EASE_MOVE = 'cubic-bezier(.45,.05,.2,1)';
 
   // Everything after the hold is stretched by this. Raise it to slow the
-  // whole sequence, lower it to tighten — the hold stays 5s either way.
+  // whole sequence, lower it to tighten — the hold is untouched either way.
   const RATE = 1;
 
   const anims = [];
