@@ -403,6 +403,28 @@
     const EXIT  = { x:RIGHT_X + 300, y:CARD_Y + CARD_H + 120 };
 
     const put = p => `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+
+    /* The pointer takes a curved path, not a straight one: a quadratic bezier
+       whose control point sits off to one side of the midpoint, sampled into
+       keyframes. The bow is perpendicular to the travel and scales with the
+       distance, so short hops stay nearly straight and long ones swing wide. */
+    const arc = (from, to) => {
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const amt = -Math.min(70, len * 0.22);          // down bows right, up bows left
+      const cx = (from.x + to.x) / 2 + (-dy / len) * amt;
+      const cy = (from.y + to.y) / 2 + ( dx / len) * amt;
+      const N = 14, frames = [];
+      for (let i = 0; i <= N; i++){
+        const t = i / N, u = 1 - t;
+        frames.push({
+          transform:put({ x:u*u*from.x + 2*u*t*cx + t*t*to.x,
+                          y:u*u*from.y + 2*u*t*cy + t*t*to.y }),
+          offset:t,
+        });
+      }
+      return frames;
+    };
     cursor.style.transform = put(START);
 
     animate(cursor, [{ opacity:0 }, { opacity:1 }],
@@ -417,7 +439,7 @@
       const to  = centre(dst);
 
       // the pointer travels to the control and presses it
-      animate(cursor, [{ transform:put(from) }, { transform:put(at) }],
+      animate(cursor, arc(from, at),
         { duration:TRAVEL, delay:t, easing:EASE_MOVE });
 
       const click = t + TRAVEL + SETTLE;
@@ -459,7 +481,7 @@
       t = click + 760;
     });
 
-    animate(cursor, [{ transform:put(from) }, { transform:put(EXIT) }],
+    animate(cursor, arc(from, EXIT),
       { duration:700, delay:t + 260, easing:'cubic-bezier(.4,0,.7,1)' });
     animate(cursor, [{ opacity:1 }, { opacity:0 }],
       { duration:420, delay:t + 480, easing:'ease-in' });
