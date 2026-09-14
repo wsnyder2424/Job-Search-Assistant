@@ -153,14 +153,14 @@
     { key:'lollipop',     label:'Prospective pay lollipop', on:true },
     { key:'overlap',      label:'Overlap',                  on:true, info:true },
     { key:'internal',     label:'Internal range',           on:true, info:true },
-    { key:'equitable',    label:'Equitable pay range',      on:true },
+    { key:'equitable',    label:'Equitable pay range',      on:true, info:true },
     { key:'configurable', label:'Configurable range',       on:true },
     { key:'boxplot',      label:'Current employee boxplot', on:true, info:true },
   ];
 
   // which markers the pointer visits, in order
   // in reading order; the boxplot marker's copy hasn't been written yet
-  const HOVERS = ['overlap', 'internal'];
+  const HOVERS = ['overlap', 'internal', 'equitable'];
 
   const el = (cls, html) => {
     const d = document.createElement('div');
@@ -204,6 +204,13 @@
         'The market-informed range of compensation established by your organization to pay employees performing the selected job.',
       ],
       band: { fill:'#B0B0B0', x:24, w:88 },     // the internal range runs wide
+    },
+    equitable: {
+      title: 'What\u2019s the equitable pay range?',
+      paras: [
+        'The equitable pay range is based on the salaries of employees performing substantially similar work and the candidate-specific factors you\u2019ve entered using the control drop-downs.',
+      ],
+      band: { fill:'#007B80', x:26, w:76 },     // wide, but inside the internal range
     },
   };
 
