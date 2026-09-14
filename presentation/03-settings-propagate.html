@@ -310,7 +310,7 @@
 
   /* ---------------- timeline ------------------------------------------ */
 
-  const HOLD      = 5000;   // sit on the two pages this long before moving
+  const HOLD      = 25000;  // sit on the two pages this long before moving
   const TRAVEL    = 560;    // cursor between controls
   const SETTLE    = 180;    // beat between arriving and clicking
   const PULSE_DUR = 780;
@@ -323,7 +323,7 @@
   // Everything after the hold is stretched by this. Raise it to slow the
   // whole sequence further, lower it to tighten — the hold is untouched
   // either way, and no individual timing below needs rewriting.
-  const RATE = 4 / 3;
+  const RATE = 3;
 
   const anims = [];
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
