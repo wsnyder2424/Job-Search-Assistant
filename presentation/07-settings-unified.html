@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nine Surfaces, One Pattern</title>
+<style>
+  :root{
+    --slide-bg:#FDFDFC;
+    --card:#FFFFFF;
+    --card-border:#E4E8EE;
+    --bar-header:#AEB7C4;
+    --bar-label:#CCD3DD;
+    --bar-sub:#E0E5EC;
+    --track:#E0E5EB;
+    --track-on:#BCC4CF;
+    --chrome-bg:#F4F6F9;
+    --chrome-line:#DDE2E9;
+  }
+
+  html,body{height:100%;}
+  body{
+    margin:0; overflow:hidden;
+    background:var(--slide-bg);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+
+  #stage{ position:absolute; width:1600px; height:900px; transform-origin:top left; }
+
+  /* two rows, five over four, centred in the slide */
+  #grid{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:56px;
+  }
+  .row{ display:flex; align-items:center; gap:28px; }
+
+  .screen{
+    position:relative;
+    flex:0 0 auto;
+    box-sizing:border-box;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 14px 34px -12px rgba(16,24,40,.16);
+    overflow:hidden;
+  }
+  /* each card holds both states, stacked; the timeline crossfades them */
+  .face{ position:absolute; inset:0; display:flex; }
+  .face.after{ opacity:0; }
+
+  /* ---- the pattern they all land on: nav left, form right, and the form
+     itself left half empty with its content ranged to the right ---- */
+  .nav{ background:var(--chrome-bg); border-right:1px solid var(--chrome-line); }
+  .form{ flex:1; display:flex; }
+  .form .gutter{ flex:0 0 42%; }
+  .form .content{ flex:1; display:flex; flex-direction:column; }
+
+  /* ---- the skeleton vocabulary every surface is drawn from ---- */
+  .bar{ background:var(--bar-label); border-radius:5px; height:10px; }
+  .bar.head{ background:var(--bar-header); height:11px; border-radius:6px; }
+  .bar.sub{ background:var(--bar-sub); height:8px; }
+  .col{ display:flex; flex-direction:column; }
+  .rowline{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .pane{ padding:16px; box-sizing:border-box; }
+  .rail{ background:var(--chrome-bg); border-right:1px solid var(--chrome-line); }
+  .topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--chrome-line); }
+  .toggle{ width:26px; height:15px; border-radius:8px; background:var(--track); flex:0 0 auto; position:relative; }
+  .toggle.on{ background:var(--track-on); }
+  .toggle i{ position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#fff; }
+  .toggle.on i{ left:13px; }
+  .field{ height:20px; border:1px solid var(--chrome-line); border-radius:4px; background:#fff; flex:0 0 auto; }
+  .tile{ border:1px solid var(--chrome-line); border-radius:6px; background:var(--chrome-bg); }
+  .tab{ height:8px; border-radius:4px; background:var(--bar-sub); }
+  .tab.sel{ background:var(--bar-header); }
+  .scrim{ position:absolute; inset:0; background:rgba(16,24,40,.10); }
+  .dialog{
+    position:absolute; background:#fff; border:1px solid var(--chrome-line);
+    border-radius:10px; box-shadow:0 10px 24px -8px rgba(16,24,40,.3);
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid">
+    <div class="row" id="row1"></div>
+    <div class="row" id="row2"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STAGE_W = 1600, STAGE_H = 900;
+
+  /* ------------------------------------------------------------------ *
+   * PLACEHOLDERS. Nine genuinely different settings-surface patterns,
+   * but invented — they stand in until the real nine are traced from the
+   * Figma board. Swapping them is a matter of editing this list; nothing
+   * below depends on what any one surface contains.
+   * ------------------------------------------------------------------ */
+
+  const px = n => n + 'px';
+  const bars = (n, widths, cls) => widths.slice(0, n)
+    .map(w => `<div class="bar ${cls || ''}" style="width:${w}"></div>`).join('');
+
+  const SURFACES = [
+    // 1 — left nav rail, simple form rows
+    { w:300, h:226, name:'nav-rail', html:`
+      <div class="rail" style="width:96px"><div class="pane col" style="gap:12px">
+        ${bars(6, ['70%','55%','80%','48%','64%','58%'], 'sub')}
+      </div></div>
+      <div class="pane col" style="flex:1; gap:18px">
+        <div class="bar head" style="width:38%"></div>
+        ${[1,2,3,4].map(() => `<div class="rowline"><div class="bar" style="width:52%"></div><div class="toggle on"><i></i></div></div>`).join('')}
+      </div>` },
+
+    // 2 — top tabs, two columns of fields
+    { w:276, h:210, name:'top-tabs', html:`
+      <div class="col" style="flex:1">
+        <div class="topbar pane" style="padding:12px 16px; display:flex; gap:14px; align-items:center">
+          <div class="tab sel" style="width:44px"></div><div class="tab" style="width:38px"></div>
+          <div class="tab" style="width:52px"></div><div class="tab" style="width:34px"></div>
+        </div>
+        <div class="pane" style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px 20px">
+          ${[1,2,3,4,5,6].map(() => `<div class="col" style="gap:6px"><div class="bar sub" style="width:46%"></div><div class="field"></div></div>`).join('')}
+        </div>
+      </div>` },
+
+    // 3 — a modal over a dimmed page
+    { w:268, h:238, name:'modal', html:`
+      <div class="col" style="flex:1; position:relative">
+        <div class="pane col" style="gap:14px; flex:1">
+          ${bars(7, ['62%','48%','70%','40%','58%','66%','44%'])}
+        </div>
+        <div class="scrim"></div>
+        <div class="dialog" style="left:40px; right:40px; top:70px">
+          <div class="pane col" style="gap:12px">
+            <div class="bar head" style="width:46%"></div>
+            ${bars(3, ['84%','70%','60%'], 'sub')}
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px">
+              <div class="field" style="width:46px"></div><div class="field" style="width:58px; background:var(--bar-header); border-color:var(--bar-header)"></div>
+            </div>
+          </div>
+        </div>
+      </div>` },
+
+    // 4 — long list, inline toggles, no nav at all
+    { w:264, h:214, name:'plain-list', html:`
+      <div class="pane col" style="flex:1; gap:11px">
+        <div class="bar head" style="width:30%; margin-bottom:4px"></div>
+        ${['64%','52%','72%','46%','58%','68%','50%','62%'].map((w,i) =>
+          `<div class="rowline"><div class="bar" style="width:${w}"></div><div class="toggle ${i%3?'on':''}"><i></i></div></div>`).join('')}
+      </div>` },
+
+    // 5 — grid of setting tiles
+    { w:252, h:222, name:'tile-grid', html:`
+      <div class="pane col" style="flex:1; gap:14px">
+        <div class="bar head" style="width:34%"></div>
+        <div style="flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:1fr 1fr; gap:12px">
+          ${[1,2,3,4,5,6].map(() => `<div class="tile" style="padding:10px; display:flex; flex-direction:column; gap:7px">
+            <div class="bar" style="width:60%"></div><div class="bar sub" style="width:84%"></div><div class="bar sub" style="width:44%"></div>
+          </div>`).join('')}
+        </div>
+      </div>` },
+
+    // 6 — a table with headers and per-row controls
+    { w:348, h:240, name:'table', html:`
+      <div class="pane col" style="flex:1; gap:0">
+        <div class="rowline" style="padding-bottom:10px; border-bottom:1px solid var(--chrome-line)">
+          <div class="bar head" style="width:26%"></div><div class="bar head" style="width:18%"></div>
+          <div class="bar head" style="width:14%"></div><div class="bar head" style="width:10%"></div>
+        </div>
+        ${[1,2,3,4].map(() => `<div class="rowline" style="padding:11px 0; border-bottom:1px solid var(--chrome-line)">
+          <div class="bar" style="width:26%"></div><div class="bar sub" style="width:18%"></div>
+          <div class="field" style="width:56px"></div><div class="toggle on"><i></i></div>
+        </div>`).join('')}
+      </div>` },
+
+    // 7 — menu list on the left, detail pane on the right
+    { w:342, h:246, name:'split-detail', html:`
+      <div class="rail" style="width:132px"><div class="pane col" style="gap:10px">
+        ${['80%','62%','74%','56%','68%','50%','72%'].map((w,i) =>
+          `<div class="bar ${i===1?'':'sub'}" style="width:${w}"></div>`).join('')}
+      </div></div>
+      <div class="pane col" style="flex:1; gap:14px">
+        <div class="bar head" style="width:52%"></div>
+        ${bars(2, ['90%','72%'], 'sub')}
+        <div class="field" style="width:100%"></div>
+        <div class="field" style="width:100%"></div>
+        <div class="rowline"><div class="bar sub" style="width:44%"></div><div class="toggle"><i></i></div></div>
+      </div>` },
+
+    // 8 — accordion sections, one open
+    { w:330, h:240, name:'accordion', html:`
+      <div class="pane col" style="flex:1; gap:10px">
+        ${[0,1,2].map(i => `
+          <div class="tile" style="padding:11px; display:flex; flex-direction:column; gap:${i===1?'10px':'0'}">
+            <div class="rowline"><div class="bar head" style="width:${40+i*8}%"></div><div class="bar sub" style="width:9px; height:9px; border-radius:2px"></div></div>
+            ${i===1 ? `<div class="col" style="gap:9px; padding-top:4px">
+              ${['76%','58%','68%'].map(w => `<div class="rowline"><div class="bar" style="width:${w}"></div><div class="toggle on"><i></i></div></div>`).join('')}
+            </div>` : ''}
+          </div>`).join('')}
+      </div>` },
+
+    // 9 — a stepper, one column, progress along the top
+    { w:368, h:238, name:'stepper', html:`
+      <div class="col" style="flex:1">
+        <div class="topbar pane" style="padding:13px 16px; display:flex; align-items:center; gap:8px">
+          ${[0,1,2,3].map(i => `<div class="bar ${i<2?'head':'sub'}" style="flex:1; height:6px"></div>`).join('')}
+        </div>
+        <div class="pane col" style="flex:1; gap:14px">
+          <div class="bar head" style="width:56%"></div>
+          <div class="bar sub" style="width:80%"></div>
+          <div class="col" style="gap:6px"><div class="bar sub" style="width:36%"></div><div class="field"></div></div>
+          <div class="col" style="gap:6px"><div class="bar sub" style="width:44%"></div><div class="field"></div></div>
+          <div style="display:flex; justify-content:flex-end; margin-top:auto">
+            <div class="field" style="width:64px; background:var(--bar-header); border-color:var(--bar-header)"></div>
+          </div>
+        </div>
+      </div>` },
+  ];
+
+  /* ------------------------------------------------------------------ *
+   * The state they all land on. One pattern — a nav rail, then a form
+   * whose left half is empty and whose content is ranged right — but no
+   * two are struck from the same die: the rail width, how many nav items
+   * and rows, and the run of the bars all vary by card.
+   * ------------------------------------------------------------------ */
+
+  const W = ['64%','52%','78%','46%','70%','58%','84%','50%'];
+
+  function unified(i, h){
+    const rail  = 72 + (i % 3) * 10;
+    const navN  = 5 + (i % 3);
+    // how many rows fit, rather than an arbitrary count that overruns the
+    // short cards and leaves the tall ones half empty
+    const rowN  = Math.max(3, Math.min(5, Math.floor((h - 70) / 42)));
+    const dense = h > 230;
+
+    const nav = [];
+    for (let n = 0; n < navN; n++){
+      nav.push(`<div class="bar sub" style="width:${W[(i + n) % W.length]}"></div>`);
+    }
+
+    const rows = [];
+    for (let r = 0; r < rowN; r++){
+      const kind = (i + r) % 3;
+      const ctrl = kind === 0 ? `<div class="toggle${(i + r) % 2 ? ' on' : ''}"><i></i></div>`
+                 : kind === 1 ? `<div class="field" style="width:100%"></div>`
+                 : `<div class="bar" style="width:${W[(i + r) % W.length]}"></div>`;
+      rows.push(`<div class="col" style="gap:6px; margin-top:${r ? (dense ? 14 : 11) : 0}px">
+        <div class="bar sub" style="width:${W[(i + r + 3) % W.length]}"></div>
+        ${ctrl}
+      </div>`);
+    }
+
+    return `
+      <div class="nav" style="width:${rail}px">
+        <div class="pane col" style="gap:10px; padding:14px 12px">
+          <div class="bar head" style="width:70%; margin-bottom:2px"></div>
+          ${nav.join('')}
+        </div>
+      </div>
+      <div class="form pane" style="padding:16px 16px 16px 0">
+        <div class="gutter"></div>
+        <div class="content">
+          <div class="bar head" style="width:64%; margin-bottom:12px"></div>
+          ${rows.join('')}
+        </div>
+      </div>`;
+  }
+
+  const row1 = document.getElementById('row1');
+  const row2 = document.getElementById('row2');
+  const screens = [];
+
+  SURFACES.forEach((s, i) => {
+    const screen = document.createElement('div');
+    screen.className = 'screen';
+    screen.style.width  = px(s.w);
+    screen.style.height = px(s.h);
+    screen.dataset.name = s.name;
+    screen.innerHTML =
+      `<div class="face before">${s.html}</div>` +
+      `<div class="face after">${unified(i, s.h)}</div>`;
+    (i < 5 ? row1 : row2).appendChild(screen);
+    screens.push(screen);
+  });
+
+  /* ---------------- the timeline -------------------------------------- *
+   * Each card gives a short shake and swaps its contents at the height of
+   * it, so the change reads as having been shaken loose rather than
+   * cross-faded politely. They go a beat apart, left to right.
+   * ------------------------------------------------------------------ */
+
+  const HOLD  = 5000;
+  const STAG  = 55;      // between one card and the next
+  const SHAKE = 640;
+  const SWAP  = 300;
+
+  const anims = [];
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function reset(){
+    anims.forEach(a => a.cancel());
+    anims.length = 0;
+    screens.forEach(sc => {
+      sc.style.transform = 'none';
+      sc.querySelector('.before').style.opacity = 1;
+      sc.querySelector('.after').style.opacity  = 0;
+    });
+  }
+
+  function play(){
+    reset();
+    if (REDUCED.matches){
+      screens.forEach(sc => {
+        sc.querySelector('.before').style.opacity = 0;
+        sc.querySelector('.after').style.opacity  = 1;
+      });
+      return;
+    }
+
+    screens.forEach((sc, i) => {
+      const at = HOLD + i * STAG;
+      const j  = (i % 2 ? -1 : 1);          // alternate which way each starts
+
+      anims.push(sc.animate([
+        { transform:'translate(0,0) rotate(0deg)' },
+        { transform:`translate(${3.5*j}px, -3px) rotate(${-0.9*j}deg)`, offset:.16 },
+        { transform:`translate(${-4*j}px, 2px) rotate(${1.1*j}deg)`,    offset:.34 },
+        { transform:`translate(${3*j}px, -4px) rotate(${-0.7*j}deg)`,   offset:.52 },
+        { transform:`translate(${-2*j}px, 2px) rotate(${0.5*j}deg)`,    offset:.72 },
+        { transform:'translate(0,0) rotate(0deg)' }
+      ], { duration:SHAKE, delay:at, easing:'cubic-bezier(.36,.07,.19,.97)', fill:'forwards' }));
+
+      const swapAt = at + SHAKE * 0.38;     // at the height of the shake
+      anims.push(sc.querySelector('.before').animate(
+        [{ opacity:1 }, { opacity:0 }],
+        { duration:SWAP, delay:swapAt, easing:'ease-in', fill:'forwards' }));
+      anims.push(sc.querySelector('.after').animate(
+        [{ opacity:0 }, { opacity:1 }],
+        { duration:SWAP, delay:swapAt, easing:'ease-out', fill:'forwards' }));
+    });
+  }
+
+  /* ---------------- fit to screen ------------------------------------ */
+
+  const stage = document.getElementById('stage');
+  function fit(){
+    const s = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.transform = `scale(${s})`;
+    stage.style.left = ((window.innerWidth  - STAGE_W * s) / 2) + 'px';
+    stage.style.top  = ((window.innerHeight - STAGE_H * s) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  window.addEventListener('click', play);
+  window.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key.toLowerCase() === 'r'){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>
